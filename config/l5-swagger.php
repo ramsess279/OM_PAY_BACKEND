@@ -10,6 +10,17 @@ return [
                 'version' => '1.0.0',
             ],
 
+            'servers' => [
+                [
+                    'url' => 'https://om-pay-rama.onrender.com',
+                    'description' => 'Serveur Production',
+                ],
+                [
+                    'url' => 'http://localhost',
+                    'description' => 'Serveur Développement',
+                ],
+            ],
+
             'routes' => [
                 /*
                  * Route for accessing api documentation interface
