@@ -9,7 +9,7 @@ RUN composer require "zircote/swagger-php:^4.0" --no-scripts --no-interaction --
     && composer install --no-scripts --optimize-autoloader --no-interaction --prefer-dist
 
 # Étape 2: Image finale
-FROM php:8.3-fpm-alpine
+FROM php:8.3-cli-alpine
 
 RUN apk add --no-cache postgresql-dev \
     && docker-php-ext-install pdo pdo_pgsql
@@ -28,4 +28,4 @@ USER laravel
 
 EXPOSE 8000
 
-# Le CMD sera fourni par docker-compose
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]

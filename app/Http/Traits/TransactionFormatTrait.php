@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Traits;
+namespace App\Http\Traits;
 
 use App\Models\Transaction;
 use App\Models\User;
