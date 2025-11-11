@@ -20,6 +20,7 @@ class CompteService
     {
         $compte = $user->comptes()->create([
             'numero_compte' => $this->generateNumeroCompte(),
+            'code_pin' => \Illuminate\Support\Facades\Hash::make($data['code_pin']),
             'type' => $data['type'] ?? 'client',
             'date_creation' => now()->toDateString(),
             'statut' => 'actif',

@@ -35,7 +35,7 @@ class SendWelcomeEmailJob implements ShouldQueue
     {
         $this->user = $user;
         $this->codePin = $codePin;
-        $this->onQueue('emails'); // File d'attente spécifique pour les emails
+        $this->onQueue('default'); // File d'attente par défaut
     }
 
     /**

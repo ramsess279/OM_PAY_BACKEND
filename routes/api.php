@@ -25,9 +25,9 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// Routes marchands
-Route::get('/marchands', [App\Http\Controllers\MarchandController::class, 'index']);
-Route::get('/marchands/{id}', [App\Http\Controllers\MarchandController::class, 'show']);
+// Routes marchands - Commentées pour l'instant
+// Route::get('/marchands', [App\Http\Controllers\MarchandController::class, 'index']);
+// Route::get('/marchands/{id}', [App\Http\Controllers\MarchandController::class, 'show']);
 
 // Routes protégées
 Route::middleware('auth:api')->group(function () {
@@ -40,5 +40,5 @@ Route::middleware('auth:api')->group(function () {
     // Routes transactions - ID du compte récupéré depuis le token
     Route::get('/mes-transactions', [TransactionController::class, 'index']); // Mes transactions
     Route::post('/mes-transactions', [TransactionController::class, 'store']); // Nouvelle transaction
-    Route::get('/mes-transactions/{transaction}', [TransactionController::class, 'show']); // Détails transaction
+    Route::get('/mes-transactions/{reference}', [TransactionController::class, 'show']); // Détails transaction par référence
 });

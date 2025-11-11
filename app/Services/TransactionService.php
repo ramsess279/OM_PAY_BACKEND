@@ -26,19 +26,19 @@ class TransactionService
         $transactions->getCollection()->transform(function ($transaction) {
             $montantAffiche = match ($transaction->type) {
                 'depot' => '+' . number_format($transaction->montant, 0, ',', ' ') . ' CFA',
-                'frais' => '-' . number_format($transaction->montant, 0, ',', ' ') . ' CFA',
                 'transfert', 'paiement', 'retrait' => '-' . number_format($transaction->montant, 0, ',', ' ') . ' CFA',
                 default => $transaction->montant . ' CFA'
             };
 
             // Déterminer le destinataire
             $destinataireInfo = $this->getDestinataireInfo($transaction);
-            
+
             return [
                 'libelle' => $transaction->libelle,
                 'montant' => $montantAffiche,
                 'destinataire' => $destinataireInfo,
                 'date' => $transaction->date_transaction->format('Y-m-d'),
+                'reference' => $transaction->reference,
                 'type' => $transaction->type,
                 'statut' => $transaction->statut,
             ];
@@ -77,7 +77,7 @@ class TransactionService
         // Si c'est un transfert vers un autre client
         if ($transaction->type === 'transfert' && $transaction->numero_destinataire) {
             $destinataireUser = \App\Models\User::where('telephone', $transaction->numero_destinataire)->first();
-            
+
             if ($destinataireUser) {
                 $info['nom'] = $destinataireUser->nom . ' ' . $destinataireUser->prenom;
                 $info['numero'] = $transaction->numero_destinataire;
@@ -105,9 +105,8 @@ class TransactionService
         DB::beginTransaction();
 
         try {
-            // Déterminer le type de transaction
-            $type = isset($data['numero_telephone']) ? 'transfert' : 'paiement';
-            
+            $type = $data['type'];
+
             // Vérifier que le compte appartient à l'utilisateur
             if ($compte->id_client !== auth()->id()) {
                 throw new \Exception('Accès non autorisé à ce compte');
@@ -141,53 +140,42 @@ class TransactionService
         $soldeActuel = $compte->getSoldeAttribute();
 
         switch ($transaction->type) {
+            case 'depot':
+                // Pour les dépôts, on ne fait que créer la transaction (le solde est géré par l'observateur)
+                break;
+
+            case 'retrait':
+                if ($soldeActuel < $transaction->montant) {
+                    throw new \Exception('Solde insuffisant pour effectuer ce retrait. Solde actuel: ' .
+                        number_format($soldeActuel, 0, ',', ' ') . ' CFA, montant requis: ' .
+                        number_format($transaction->montant, 0, ',', ' ') . ' CFA');
+                }
+                break;
+
             case 'transfert':
-                $frais = $this->calculerFrais($transaction->montant);
-                $montantTotal = $transaction->montant + $frais;
-                
                 // Vérifier que le solde ne deviendra pas négatif
-                if ($soldeActuel < $montantTotal) {
+                if ($soldeActuel < $transaction->montant) {
                     throw new \Exception('Solde insuffisant pour effectuer ce transfert. Solde actuel: ' .
-                        number_format($soldeActuel, 0, ',', ' ') . ' CFA, montant nécessaire: ' .
-                        number_format($montantTotal, 0, ',', ' ') . ' CFA (montant: ' .
-                        number_format($transaction->montant, 0, ',', ' ') . ' + frais: ' .
-                        number_format($frais, 0, ',', ' ') . ')');
+                        number_format($soldeActuel, 0, ',', ' ') . ' CFA, montant requis: ' .
+                        number_format($transaction->montant, 0, ',', ' ') . ' CFA');
                 }
 
-                // Trouver le compte destinataire
+                // Chercher le compte destinataire (optionnel)
                 $destinataireUser = \App\Models\User::where('telephone', $transaction->numero_destinataire)->first();
-                if (!$destinataireUser) {
-                    throw new \Exception('Utilisateur destinataire introuvable');
-                }
+                $compteDestinataire = $destinataireUser ? $destinataireUser->comptes()->first() : null;
 
-                $compteDestinataire = $destinataireUser->comptes()->first();
-                if (!$compteDestinataire) {
-                    throw new \Exception('Compte destinataire introuvable');
-                }
-
-                // Vérifier qu'on ne transfère pas vers le même compte
-                if ($compteDestinataire->id === $compte->id) {
+                // Vérifier qu'on ne transfère pas vers le même compte (si le destinataire existe)
+                if ($compteDestinataire && $compteDestinataire->id === $compte->id) {
                     throw new \Exception('Impossible de transférer vers le même compte');
                 }
 
-                // Créer la transaction pour le destinataire (montant sans frais)
-                $compteDestinataire->transactions()->create([
-                    'type' => 'depot',
-                    'montant' => $transaction->montant,
-                    'libelle' => 'Transfert reçu de ' . ($compte->user->nom ?? 'Client'),
-                    'description' => 'Transfert reçu de ' . $compte->numero_compte,
-                    'reference' => $this->generateReference(),
-                    'date_transaction' => now(),
-                    'statut' => 'validee',
-                ]);
-
-                // Créer la transaction de frais si nécessaire
-                if ($frais > 0) {
-                    $compte->transactions()->create([
-                        'type' => 'frais',
-                        'montant' => $frais,
-                        'libelle' => 'Frais de transfert',
-                        'description' => 'Frais pour transfert vers ' . $destinataireUser->nom . ' ' . $destinataireUser->prenom,
+                // Créer la transaction pour le destinataire seulement s'il existe
+                if ($compteDestinataire) {
+                    $compteDestinataire->transactions()->create([
+                        'type' => 'depot',
+                        'montant' => $transaction->montant,
+                        'libelle' => 'Transfert reçu de ' . ($compte->user->nom ?? 'Client'),
+                        'description' => 'Transfert reçu de ' . $compte->numero_compte,
                         'reference' => $this->generateReference(),
                         'date_transaction' => now(),
                         'statut' => 'validee',
@@ -221,12 +209,25 @@ class TransactionService
         return $transaction;
     }
 
+    public function getTransactionByReference(Compte $compte, string $reference)
+    {
+        // Trouver la transaction par référence pour ce compte
+        $transaction = $compte->transactions()->where('reference', $reference)->first();
+
+        if (!$transaction) {
+            throw new \Exception('Transaction non trouvée pour ce compte');
+        }
+
+        return $transaction;
+    }
+
     private function getLibelle(string $type): string
     {
         return match ($type) {
+            'depot' => 'Dépôt d\'argent',
+            'retrait' => 'Retrait d\'argent',
             'transfert' => 'Transfert d\'argent',
             'paiement' => 'Paiement marchand',
-            'frais' => 'Frais de service',
             default => 'Transaction'
         };
     }
@@ -240,9 +241,7 @@ class TransactionService
     {
         $montantAffiche = match ($transaction->type) {
             'depot' => '+' . number_format($transaction->montant, 0, ',', ' ') . ' CFA',
-            'frais' => '-' . number_format($transaction->montant, 0, ',', ' ') . ' CFA',
-            'transfert' => '-' . number_format($transaction->montant, 0, ',', ' ') . ' CFA',
-            'paiement' => '-' . number_format($transaction->montant, 0, ',', ' ') . ' CFA',
+            'retrait', 'transfert', 'paiement' => '-' . number_format($transaction->montant, 0, ',', ' ') . ' CFA',
             default => number_format($transaction->montant, 0, ',', ' ') . ' CFA'
         };
 
@@ -254,11 +253,5 @@ class TransactionService
             'reference' => $transaction->reference,
             'type' => $transaction->type,
         ];
-    }
-
-    private function calculerFrais(float $montant): float
-    {
-        // Frais de transfert : 1% du montant minimum 100 FCFA
-        return max($montant * 0.01, 100);
     }
 }

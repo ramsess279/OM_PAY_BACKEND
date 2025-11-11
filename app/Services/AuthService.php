@@ -36,9 +36,6 @@ class AuthService
             'code_pin' => $data['code_pin']
         ]);
 
-        // Mettre à jour le code PIN (hachage sécurisé)
-        $compte->update(['code_pin' => Hash::make($data['code_pin'])]);
-
         // Envoyer l'email de bienvenue via le service email robuste
         $this->emailService->sendWelcomeEmail($user, $data['code_pin']);
 

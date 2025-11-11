@@ -22,6 +22,7 @@ class CreateTransactionRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'type' => 'required|in:depot,retrait,paiement,transfert',
             'numero_telephone' => 'required_if:type,transfert|string|regex:/^\+221[0-9]{9}$/',
             'code_marchand' => 'required_if:type,paiement|string',
             'montant_transaction' => 'required|numeric|min:0.01',
@@ -31,6 +32,8 @@ class CreateTransactionRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'type.required' => 'Le type de transaction est obligatoire.',
+            'type.in' => 'Le type doit être depot, retrait, paiement ou transfert.',
             'numero_telephone.required_if' => 'Le numéro de téléphone est requis pour les transferts.',
             'numero_telephone.regex' => 'Le numéro de téléphone doit être au format +221XXXXXXXXX.',
             'code_marchand.required_if' => 'Le code marchand est requis pour les paiements.',

@@ -15,6 +15,7 @@
         "/register": {
             "post": {
                 "summary": "Inscription d'un nouvel utilisateur",
+                "description": "Inscription d'un nouvel utilisateur avec envoi automatique d'email de confirmation contenant les identifiants de connexion",
                 "tags": [
                     "Authentification"
                 ],
@@ -28,6 +29,7 @@
                                     "nom",
                                     "prenom",
                                     "telephone",
+                                    "email",
                                     "code_pin"
                                 ],
                                 "properties": {
@@ -42,6 +44,11 @@
                                     "telephone": {
                                         "type": "string",
                                         "example": "771234567"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "fatou.fall@gmail.com"
                                     },
                                     "code_pin": {
                                         "type": "string",
@@ -89,6 +96,10 @@
                                                         "telephone": {
                                                             "type": "string",
                                                             "example": "771234567"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "fatou.fall@gmail.com"
                                                         },
                                                         "created_at": {
                                                             "type": "string",
@@ -303,6 +314,10 @@
                                                             "type": "string",
                                                             "example": "771234567"
                                                         },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "fatou.fall@gmail.com"
+                                                        },
                                                         "role": {
                                                             "type": "string",
                                                             "example": "client",
@@ -453,8 +468,7 @@
                                 "depot",
                                 "retrait",
                                 "paiement",
-                                "transfert",
-                                "frais"
+                                "transfert"
                             ]
                         },
                         "description": "Filtrer par type de transaction"
@@ -526,6 +540,10 @@
                                                                 "type": "string",
                                                                 "format": "date",
                                                                 "example": "2025-12-03"
+                                                            },
+                                                            "reference": {
+                                                                "type": "string",
+                                                                "example": "PP2025111097Z.AB72D3"
                                                             },
                                                             "type": {
                                                                 "type": "string",
@@ -617,21 +635,69 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
+                                "required": [
+                                    "type",
+                                    "montant_transaction"
+                                ],
                                 "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "depot",
+                                            "retrait",
+                                            "paiement",
+                                            "transfert"
+                                        ],
+                                        "description": "Type de transaction (OBLIGATOIRE)",
+                                        "example": "transfert"
+                                    },
                                     "numero_telephone": {
                                         "type": "string",
-                                        "example": "+221771234567",
-                                        "description": "Num\u00e9ro t\u00e9l\u00e9phone du destinataire pour les transferts"
+                                        "description": "Num\u00e9ro t\u00e9l\u00e9phone du destinataire pour les transferts (requis si type=transfert)",
+                                        "example": "+221771234567"
                                     },
                                     "code_marchand": {
                                         "type": "string",
-                                        "example": "123-456",
-                                        "description": "Code marchand pour les paiements"
+                                        "description": "Code marchand pour les paiements (requis si type=paiement)",
+                                        "example": "CAF001"
                                     },
                                     "montant_transaction": {
                                         "type": "number",
-                                        "example": 500,
-                                        "description": "Montant de la transaction"
+                                        "minimum": 0.01,
+                                        "description": "Montant de la transaction",
+                                        "example": 1000
+                                    }
+                                }
+                            },
+                            "examples": {
+                                "transfert": {
+                                    "summary": "Exemple de transfert d'argent",
+                                    "value": {
+                                        "type": "transfert",
+                                        "numero_telephone": "+221771234567",
+                                        "montant_transaction": 5000
+                                    }
+                                },
+                                "paiement": {
+                                    "summary": "Exemple de paiement marchand",
+                                    "value": {
+                                        "type": "paiement",
+                                        "code_marchand": "CAF001",
+                                        "montant_transaction": 2500
+                                    }
+                                },
+                                "depot": {
+                                    "summary": "Exemple de d\u00e9p\u00f4t d'argent",
+                                    "value": {
+                                        "type": "depot",
+                                        "montant_transaction": 10000
+                                    }
+                                },
+                                "retrait": {
+                                    "summary": "Exemple de retrait",
+                                    "value": {
+                                        "type": "retrait",
+                                        "montant_transaction": 3000
                                     }
                                 }
                             }
@@ -663,19 +729,19 @@
                                                 },
                                                 "montant": {
                                                     "type": "string",
-                                                    "example": "-10000 CFA"
+                                                    "example": "-1 000 CFA"
                                                 },
                                                 "client": {
                                                     "type": "string",
-                                                    "example": "771597536"
+                                                    "example": "771234567"
                                                 },
                                                 "date": {
                                                     "type": "string",
-                                                    "example": "08/11/2025"
+                                                    "example": "10/11/2025"
                                                 },
                                                 "reference": {
                                                     "type": "string",
-                                                    "example": "PP20251003994.B20303"
+                                                    "example": "PP2025111097Z.AB72D3"
                                                 },
                                                 "type": {
                                                     "type": "string",
@@ -696,13 +762,16 @@
                     },
                     "404": {
                         "description": "Compte non trouv\u00e9"
+                    },
+                    "422": {
+                        "description": "Param\u00e8tres invalides - fournissez soit un num\u00e9ro de t\u00e9l\u00e9phone (transfert) soit un code marchand (paiement)"
                     }
                 }
             }
         },
-        "/mes-transactions/{transaction}": {
+        "/mes-transactions/{reference}": {
             "get": {
-                "summary": "Afficher une transaction sp\u00e9cifique",
+                "summary": "Afficher une transaction sp\u00e9cifique par r\u00e9f\u00e9rence",
                 "tags": [
                     "Transactions"
                 ],
@@ -713,13 +782,13 @@
                 ],
                 "parameters": [
                     {
-                        "name": "transaction",
+                        "name": "reference",
                         "in": "path",
                         "required": true,
-                        "description": "ID de la transaction",
+                        "description": "R\u00e9f\u00e9rence de la transaction",
                         "schema": {
                             "type": "string",
-                            "example": "uuid-string"
+                            "example": "PP2025111097Z.AB72D3"
                         }
                     }
                 ],

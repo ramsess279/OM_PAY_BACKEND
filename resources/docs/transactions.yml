@@ -21,7 +21,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: ["depot", "retrait", "paiement", "transfert", "frais"]
+            enum: ["depot", "retrait", "paiement", "transfert"]
           description: Filtrer par type de transaction
         - name: statut
           in: query
@@ -73,6 +73,9 @@ paths:
                               type: string
                               format: date
                               example: "2025-12-03"
+                            reference:
+                              type: string
+                              example: "PP2025111097Z.AB72D3"
                             type:
                               type: string
                               example: "transfert"
@@ -124,29 +127,57 @@ paths:
         - Transactions
       security:
         - bearerAuth: []
-      parameters:
-        - name: numero_telephone
-          in: query
-          required: false
-          description: "Numéro téléphone du destinataire pour les transferts"
-          schema:
-            type: string
-            example: "771234567"
-        - name: code_marchand
-          in: query
-          required: false
-          description: "Code marchand pour les paiements (voir GET /api/marchands pour la liste)"
-          schema:
-            type: string
-            example: "CAF001"
-        - name: montant_transaction
-          in: query
-          required: true
-          description: "Montant de la transaction"
-          schema:
-            type: number
-            minimum: 100
-            example: 1000
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+                - montant_transaction
+              properties:
+                type:
+                  type: string
+                  enum: ["depot", "retrait", "paiement", "transfert"]
+                  description: "Type de transaction (OBLIGATOIRE)"
+                  example: "transfert"
+                numero_telephone:
+                  type: string
+                  description: "Numéro téléphone du destinataire pour les transferts (requis si type=transfert)"
+                  example: "+221771234567"
+                code_marchand:
+                  type: string
+                  description: "Code marchand pour les paiements (requis si type=paiement)"
+                  example: "CAF001"
+                montant_transaction:
+                  type: number
+                  minimum: 0.01
+                  description: "Montant de la transaction"
+                  example: 1000
+            examples:
+              transfert:
+                summary: "Exemple de transfert d'argent"
+                value:
+                  type: "transfert"
+                  numero_telephone: "+221771234567"
+                  montant_transaction: 5000
+              paiement:
+                summary: "Exemple de paiement marchand"
+                value:
+                  type: "paiement"
+                  code_marchand: "CAF001"
+                  montant_transaction: 2500
+              depot:
+                summary: "Exemple de dépôt d'argent"
+                value:
+                  type: "depot"
+                  montant_transaction: 10000
+              retrait:
+                summary: "Exemple de retrait"
+                value:
+                  type: "retrait"
+                  montant_transaction: 3000
       responses:
         '201':
           description: Transaction effectuée avec succès
@@ -191,21 +222,21 @@ paths:
         '422':
           description: Paramètres invalides - fournissez soit un numéro de téléphone (transfert) soit un code marchand (paiement)
 
-  /mes-transactions/{transaction}:
+  /mes-transactions/{reference}:
     get:
-      summary: Afficher une transaction spécifique
+      summary: Afficher une transaction spécifique par référence
       tags:
         - Transactions
       security:
         - bearerAuth: []
       parameters:
-        - name: transaction
+        - name: reference
           in: path
           required: true
-          description: ID de la transaction
+          description: Référence de la transaction
           schema:
             type: string
-            example: "uuid-string"
+            example: "PP2025111097Z.AB72D3"
       responses:
         '200':
           description: Transaction récupérée avec succès

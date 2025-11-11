@@ -6,20 +6,17 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $authYaml = file_get_contents(__DIR__ . '/../resources/docs/auth.yml');
 $comptesYaml = file_get_contents(__DIR__ . '/../resources/docs/comptes.yml');
 $transactionsYaml = file_get_contents(__DIR__ . '/../resources/docs/transactions.yml');
-$marchandsYaml = file_get_contents(__DIR__ . '/../resources/docs/marchands.yml');
 
 // Parser les YAML en arrays
 $authData = Symfony\Component\Yaml\Yaml::parse($authYaml);
 $comptesData = Symfony\Component\Yaml\Yaml::parse($comptesYaml);
 $transactionsData = Symfony\Component\Yaml\Yaml::parse($transactionsYaml);
-$marchandsData = Symfony\Component\Yaml\Yaml::parse($marchandsYaml);
 
 // Fusionner les paths
 $mergedPaths = array_merge(
     $authData['paths'] ?? [],
     $comptesData['paths'] ?? [],
-    $transactionsData['paths'] ?? [],
-    $marchandsData['paths'] ?? []
+    $transactionsData['paths'] ?? []
 );
 
 // Créer le document final
