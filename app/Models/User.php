@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -18,7 +19,7 @@ class User extends Authenticatable
         'nom',
         'prenom',
         'telephone',
-        'code_pin',
+        'email',
         'role',
     ];
 
@@ -26,7 +27,6 @@ class User extends Authenticatable
      * Champs cachés lors du retour JSON.
      */
     protected $hidden = [
-        'code_pin',
         'remember_token',
     ];
 
@@ -36,4 +36,26 @@ class User extends Authenticatable
     protected $casts = [
         'id' => 'string',
     ];
+
+    /**
+     * Boot du modèle pour générer automatiquement les UUIDs
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($model) {
+            if (empty($model->getKey())) {
+                $model->{$model->getKeyName()} = (string) Str::uuid();
+            }
+        });
+    }
+
+    /**
+     * Relations
+     */
+    public function comptes()
+    {
+        return $this->hasMany(Compte::class, 'id_client');
+    }
 }

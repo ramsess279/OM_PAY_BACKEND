@@ -11,13 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->uuid('id')->primary()->unique();
+        Schema::create('marchands', function (Blueprint $table) {
+            $table->id();
             $table->string('nom');
-            $table->string('prenom');
-            $table->string('telephone')->unique();
-            $table->enum('role', ['client', 'admin'])->default('client');
-            $table->rememberToken();
+            $table->string('code_marchand')->unique();
+            $table->string('adresse');
+            $table->string('telephone');
+            $table->string('email')->nullable();
+            $table->string('type_commerce');
+            $table->boolean('actif')->default(true);
             $table->timestamps();
         });
     }
@@ -27,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('marchands');
     }
 };

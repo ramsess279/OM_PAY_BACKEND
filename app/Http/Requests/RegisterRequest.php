@@ -18,8 +18,8 @@ class RegisterRequest extends FormRequest
             'nom' => 'required|string|max:100',
             'prenom' => 'required|string|max:100',
             'telephone' => 'required|string|unique:users,telephone',
+            'email' => 'required|email|unique:users,email',
             'code_pin' => 'required|string|min:4|max:6',
-            'role' => 'required|in:client,admin',
         ];
     }
 
@@ -27,7 +27,8 @@ class RegisterRequest extends FormRequest
     {
         return [
             'telephone.unique' => 'Ce numéro de téléphone est déjà enregistré.',
-            'role.in' => 'Le rôle doit être soit client soit admin.',
+            'email.unique' => 'Cet email est déjà enregistré.',
+            'email.email' => 'Veuillez saisir une adresse email valide.',
         ];
     }
 }

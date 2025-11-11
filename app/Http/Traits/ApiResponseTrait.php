@@ -21,4 +21,26 @@ trait ApiResponseTrait
             'errors' => $errors,
         ], $code);
     }
+
+    /**
+     * Formate la pagination dans le format souhaité
+     */
+    protected function formatPagination($paginator)
+    {
+        return [
+            'pagination' => [
+                'total_items' => $paginator->total(),
+                'items_per_page' => $paginator->perPage(),
+                'current_page' => $paginator->currentPage(),
+                'has_previous' => $paginator->hasPreviousPage(),
+                'has_next' => $paginator->hasNextPage(),
+                'links' => [
+                    'first' => $paginator->url(1),
+                    'previous' => $paginator->previousPageUrl(),
+                    'next' => $paginator->nextPageUrl(),
+                    'last' => $paginator->url($paginator->lastPage())
+                ]
+            ]
+        ];
+    }
 }
