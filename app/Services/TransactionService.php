@@ -237,6 +237,10 @@ class TransactionService
         return 'PP' . date('Ymd') . strtoupper(substr(md5(uniqid()), 0, 10));
     }
 
+    /**
+     * @param Transaction $transaction
+     * @param Compte $compte
+     */
     private function formatTransactionResponse(Transaction $transaction, Compte $compte): array
     {
         $montantAffiche = match ($transaction->type) {
