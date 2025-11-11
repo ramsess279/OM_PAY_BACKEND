@@ -45,9 +45,9 @@ return [
                 /*
                  * Absolute paths to directory containing the swagger annotations are stored.
                  */
-                'annotations' => env('APP_ENV') === 'production' ? [
-                    base_path('resources/docs')
-                ] : [],
+                'annotations' => [
+                    // base_path('resources/docs') // Disabled due to YAML parsing issues
+                ],
             ],
         ],
     ],
