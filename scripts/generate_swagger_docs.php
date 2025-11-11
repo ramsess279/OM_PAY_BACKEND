@@ -29,6 +29,10 @@ $finalDoc = [
     ],
     'servers' => [
         [
+            'url' => 'https://om-pay-rama.onrender.com/api',
+            'description' => 'Serveur de production',
+        ],
+        [
             'url' => 'http://localhost:8000/api',
             'description' => 'Serveur de développement',
         ],
