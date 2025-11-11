@@ -4,6 +4,8 @@ info:
   description: Endpoints de gestion des comptes pour l'API OM Pay
   version: 1.0.0
 servers:
+  - url: https://om-pay-rama.onrender.com/api
+    description: Serveur de production
   - url: http://localhost:8000/api
     description: Serveur de développement
 
