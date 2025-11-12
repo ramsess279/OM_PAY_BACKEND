@@ -83,7 +83,7 @@ return [
             /*
              * Absolute path to location where parsed annotations will be stored
              */
-            'docs' => storage_path('api-docs'),
+            'docs' => public_path('api-docs'),
 
             /*
              * Absolute path to directories that should be excluded from scanning
