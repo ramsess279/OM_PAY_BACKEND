@@ -267,6 +267,7 @@ return [
          * Swagger UI configuration parameters
          */
         'ui' => [
+            'url' => '/docs',
             'display' => [
                 'dark_mode' => env('L5_SWAGGER_UI_DARK_MODE', false),
                 /*
