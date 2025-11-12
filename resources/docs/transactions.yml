@@ -71,6 +71,18 @@ paths:
                                 est_client:
                                   type: boolean
                                   example: true
+                            expediteur:
+                              type: object
+                              properties:
+                                nom:
+                                  type: string
+                                  example: "Jane Smith"
+                                numero:
+                                  type: string
+                                  example: "771234568"
+                                est_client:
+                                  type: boolean
+                                  example: true
                             date:
                               type: string
                               format: date
@@ -102,23 +114,6 @@ paths:
                           has_next:
                             type: boolean
                             example: true
-                          links:
-                            type: object
-                            properties:
-                              first:
-                                type: string
-                                example: "http://localhost:8000/api/mes-transactions?page=1"
-                              previous:
-                                type: string
-                                nullable: true
-                                example: null
-                              next:
-                                type: string
-                                nullable: true
-                                example: "http://localhost:8000/api/mes-transactions?page=2"
-                              last:
-                                type: string
-                                example: "http://localhost:8000/api/mes-transactions?page=2"
         '401':
           description: Non authentifié
         '404':
@@ -262,12 +257,34 @@ paths:
                       montant:
                         type: string
                         example: "-10000 CFA"
-                      client:
+                      expediteur:
+                        type: object
+                        properties:
+                          nom:
+                            type: string
+                            example: "Jane Smith"
+                          numero:
+                            type: string
+                            example: "771234568"
+                          est_client:
+                            type: boolean
+                            example: true
+                      destinataire:
+                        type: object
+                        properties:
+                          nom:
+                            type: string
+                            example: "John Doe"
+                          numero:
+                            type: string
+                            example: "771234567"
+                          est_client:
+                            type: boolean
+                            example: true
+                      date_transaction:
                         type: string
-                        example: "771597536"
-                      date:
-                        type: string
-                        example: "08/11/2025"
+                        format: date-time
+                        example: "2025-11-08T14:30:00.000000Z"
                       reference:
                         type: string
                         example: "PP20251003994.B20303"
@@ -277,10 +294,6 @@ paths:
                       statut:
                         type: string
                         example: "validee"
-                      date_transaction:
-                        type: string
-                        format: date-time
-                        example: "2025-11-08T14:30:00"
         '401':
           description: Non authentifié
         '404':

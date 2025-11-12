@@ -89,9 +89,21 @@ class TransactionController extends Controller
         // $this->authorize('view', $compte); // Désactivé temporairement
 
         try {
-            $transactionData = $this->transactionService->getTransactionByReference($compte, $reference);
+            $transaction = $this->transactionService->getTransactionByReference($compte, $reference);
 
-            return $this->successResponse($transactionData, 'Transaction récupérée avec succès');
+            // Formater la réponse comme pour la création
+            $formattedTransaction = [
+                'libelle' => $transaction->libelle,
+                'montant' => $transaction->type === 'depot' ? '+' . number_format($transaction->montant, 0, ',', ' ') . ' CFA' : '-' . number_format($transaction->montant, 0, ',', ' ') . ' CFA',
+                'expediteur' => $this->transactionService->getExpediteurInfo($transaction),
+                'destinataire' => $this->transactionService->getDestinataireInfo($transaction),
+                'date_transaction' => $transaction->date_transaction->toISOString(),
+                'reference' => $transaction->reference,
+                'type' => $transaction->type,
+                'statut' => $transaction->statut,
+            ];
+
+            return $this->successResponse($formattedTransaction, 'Transaction récupérée avec succès');
 
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 404);

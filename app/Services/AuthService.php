@@ -39,26 +39,29 @@ class AuthService
         // Envoyer l'email de bienvenue via le service email robuste
         $this->emailService->sendWelcomeEmail($user, $data['code_pin']);
 
-        $token = $user->createToken('AuthToken', [], now()->addMinutes(60))->accessToken;
-        $refreshToken = $user->createToken('RefreshToken', [], now()->addDays(30))->accessToken;
+        $tokenResult = $user->createToken('AuthToken');
+        $tokenResult->token->expires_at = now()->addMinutes(60);
+        $tokenResult->token->save();
+        $token = $tokenResult->accessToken;
+
+        $refreshTokenResult = $user->createToken('RefreshToken');
+        $refreshTokenResult->token->expires_at = now()->addDays(30);
+        $refreshTokenResult->token->save();
+        $refreshToken = $refreshTokenResult->accessToken;
 
         // Calculer les dates d'expiration
         $accessTokenExpiresAt = now()->addMinutes(60);
         $refreshTokenExpiresAt = now()->addDays(30);
 
-        // Retourner le compte avec le code PIN en clair (pas hashé)
-        $compteArray = $compte->toArray();
-        $compteArray['code_pin'] = $data['code_pin'];
-
         return [
-            'user' => $user,
-            'compte' => $compteArray,
-            'access_token' => $token,
-            'refresh_token' => $refreshToken,
-            'token_type' => 'Bearer',
-            'expires_in' => 60 * 60,
-            'expires_at' => $accessTokenExpiresAt->toISOString(),
-            'refresh_expires_at' => $refreshTokenExpiresAt->toISOString(),
+            'nom' => $user->nom,
+            'prenom' => $user->prenom,
+            'telephone' => $user->telephone,
+            'email' => $user->email,
+            'numero_compte' => $compte->numero_compte,
+            'code_pin' => $data['code_pin'], // Code PIN en clair pour référence
+            'solde' => $compte->solde,
+            'date_creation' => $compte->date_creation->toISOString(),
         ];
     }
 
@@ -77,10 +80,16 @@ class AuthService
         }
 
         // Créer le token d'accès
-        $accessToken = $user->createToken('AuthToken', [], now()->addMinutes(60))->accessToken;
-        
+        $accessTokenResult = $user->createToken('AuthToken');
+        $accessTokenResult->token->expires_at = now()->addMinutes(60);
+        $accessTokenResult->token->save();
+        $accessToken = $accessTokenResult->accessToken;
+
         // Créer le refresh token
-        $refreshToken = $user->createToken('RefreshToken', [], now()->addDays(30))->accessToken;
+        $refreshTokenResult = $user->createToken('RefreshToken');
+        $refreshTokenResult->token->expires_at = now()->addDays(30);
+        $refreshTokenResult->token->save();
+        $refreshToken = $refreshTokenResult->accessToken;
 
         // Calculer les dates d'expiration
         $accessTokenExpiresAt = now()->addMinutes(60);
@@ -93,14 +102,6 @@ class AuthService
             'expires_in' => 60 * 60, // 60 minutes en secondes
             'expires_at' => $accessTokenExpiresAt->toISOString(),
             'refresh_expires_at' => $refreshTokenExpiresAt->toISOString(),
-            'user' => [
-                'id' => $user->id,
-                'nom' => $user->nom,
-                'prenom' => $user->prenom,
-                'telephone' => $user->telephone,
-                'email' => $user->email,
-                'role' => $user->role,
-            ],
         ];
     }
 

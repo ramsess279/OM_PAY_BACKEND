@@ -82,134 +82,40 @@
                                         "data": {
                                             "type": "object",
                                             "properties": {
-                                                "user": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "string",
-                                                            "example": "OE093939304004040040"
-                                                        },
-                                                        "nom": {
-                                                            "type": "string",
-                                                            "example": "Fatou"
-                                                        },
-                                                        "prenom": {
-                                                            "type": "string",
-                                                            "example": "Fall"
-                                                        },
-                                                        "telephone": {
-                                                            "type": "string",
-                                                            "example": "771234567"
-                                                        },
-                                                        "email": {
-                                                            "type": "string",
-                                                            "example": "fatou.fall@gmail.com"
-                                                        },
-                                                        "created_at": {
-                                                            "type": "string",
-                                                            "format": "date-time"
-                                                        },
-                                                        "updated_at": {
-                                                            "type": "string",
-                                                            "format": "date-time"
-                                                        }
-                                                    }
-                                                },
-                                                "compte": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "string",
-                                                            "example": "uuid-string"
-                                                        },
-                                                        "id_client": {
-                                                            "type": "string",
-                                                            "example": "OE093939304004040040"
-                                                        },
-                                                        "numero_compte": {
-                                                            "type": "string",
-                                                            "example": "OMABC12345678"
-                                                        },
-                                                        "type": {
-                                                            "type": "string",
-                                                            "enum": [
-                                                                "client",
-                                                                "marchand"
-                                                            ],
-                                                            "example": "client"
-                                                        },
-                                                        "date_creation": {
-                                                            "type": "string",
-                                                            "format": "date",
-                                                            "example": "2024-01-15"
-                                                        },
-                                                        "statut": {
-                                                            "type": "string",
-                                                            "enum": [
-                                                                "actif",
-                                                                "bloque",
-                                                                "ferme"
-                                                            ],
-                                                            "example": "actif"
-                                                        },
-                                                        "code_pin": {
-                                                            "type": "string",
-                                                            "example": "1234",
-                                                            "description": "Code PIN en clair (pour r\u00e9f\u00e9rence uniquement)"
-                                                        },
-                                                        "solde": {
-                                                            "type": "number",
-                                                            "format": "float",
-                                                            "example": 0
-                                                        },
-                                                        "metadata": {
-                                                            "type": "object",
-                                                            "properties": {
-                                                                "derniereModification": {
-                                                                    "type": "string",
-                                                                    "format": "date-time"
-                                                                },
-                                                                "version": {
-                                                                    "type": "integer",
-                                                                    "example": 1
-                                                                }
-                                                            }
-                                                        },
-                                                        "created_at": {
-                                                            "type": "string",
-                                                            "format": "date-time"
-                                                        },
-                                                        "updated_at": {
-                                                            "type": "string",
-                                                            "format": "date-time"
-                                                        }
-                                                    }
-                                                },
-                                                "access_token": {
+                                                "nom": {
                                                     "type": "string",
-                                                    "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
+                                                    "example": "Fatou"
                                                 },
-                                                "refresh_token": {
+                                                "prenom": {
                                                     "type": "string",
-                                                    "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
+                                                    "example": "Fall"
                                                 },
-                                                "token_type": {
+                                                "telephone": {
                                                     "type": "string",
-                                                    "example": "Bearer"
+                                                    "example": "771234567"
                                                 },
-                                                "expires_in": {
-                                                    "type": "integer",
-                                                    "example": 3600
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "fatou.fall@gmail.com"
                                                 },
-                                                "expires_at": {
+                                                "numero_compte": {
+                                                    "type": "string",
+                                                    "example": "OMABC12345678"
+                                                },
+                                                "code_pin": {
+                                                    "type": "string",
+                                                    "example": "1234",
+                                                    "description": "Code PIN en clair (pour r\u00e9f\u00e9rence uniquement)"
+                                                },
+                                                "solde": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 50000
+                                                },
+                                                "date_creation": {
                                                     "type": "string",
                                                     "format": "date-time",
-                                                    "example": "2025-11-10T09:47:17.442309Z"
-                                                },
-                                                "refresh_expires_at": {
-                                                    "type": "string",
-                                                    "format": "date-time",
-                                                    "example": "2025-12-10T08:47:17.442409Z"
+                                                    "example": "2024-01-15T10:00:00.000000Z"
                                                 }
                                             }
                                         }
@@ -298,36 +204,6 @@
                                                     "type": "string",
                                                     "format": "date-time",
                                                     "example": "2025-12-10T08:47:17.442409Z"
-                                                },
-                                                "user": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "string",
-                                                            "example": "OE093939304004040040"
-                                                        },
-                                                        "nom": {
-                                                            "type": "string",
-                                                            "example": "Fatou"
-                                                        },
-                                                        "prenom": {
-                                                            "type": "string",
-                                                            "example": "Fall"
-                                                        },
-                                                        "telephone": {
-                                                            "type": "string",
-                                                            "example": "771234567"
-                                                        },
-                                                        "email": {
-                                                            "type": "string",
-                                                            "example": "fatou.fall@gmail.com"
-                                                        },
-                                                        "role": {
-                                                            "type": "string",
-                                                            "example": "client",
-                                                            "description": "Tous les utilisateurs sont clients par d\u00e9faut"
-                                                        }
-                                                    }
                                                 }
                                             }
                                         }
@@ -377,10 +253,6 @@
                                                     "type": "string",
                                                     "example": "uuid-string"
                                                 },
-                                                "id_client": {
-                                                    "type": "string",
-                                                    "example": "OE093939304004040040"
-                                                },
                                                 "numero_compte": {
                                                     "type": "string",
                                                     "example": "OMABC12345678"
@@ -413,6 +285,27 @@
                                                     "example": 150000.5,
                                                     "description": "Solde calcul\u00e9 dynamiquement"
                                                 },
+                                                "nom_complet": {
+                                                    "type": "string",
+                                                    "example": "Fatou Fall"
+                                                },
+                                                "code_pin": {
+                                                    "type": "string",
+                                                    "example": "$2y$10$...",
+                                                    "description": "Code PIN hash\u00e9"
+                                                },
+                                                "numero": {
+                                                    "type": "string",
+                                                    "example": "771234567"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "fatou.fall@gmail.com"
+                                                },
+                                                "id_client": {
+                                                    "type": "string",
+                                                    "example": "OE093939304004040040"
+                                                },
                                                 "metadata": {
                                                     "type": "object",
                                                     "properties": {
@@ -425,14 +318,6 @@
                                                             "example": 1
                                                         }
                                                     }
-                                                },
-                                                "created_at": {
-                                                    "type": "string",
-                                                    "format": "date-time"
-                                                },
-                                                "updated_at": {
-                                                    "type": "string",
-                                                    "format": "date-time"
                                                 }
                                             }
                                         }
@@ -540,6 +425,23 @@
                                                                     }
                                                                 }
                                                             },
+                                                            "expediteur": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "nom": {
+                                                                        "type": "string",
+                                                                        "example": "Jane Smith"
+                                                                    },
+                                                                    "numero": {
+                                                                        "type": "string",
+                                                                        "example": "771234568"
+                                                                    },
+                                                                    "est_client": {
+                                                                        "type": "boolean",
+                                                                        "example": true
+                                                                    }
+                                                                }
+                                                            },
                                                             "date": {
                                                                 "type": "string",
                                                                 "format": "date",
@@ -582,29 +484,6 @@
                                                         "has_next": {
                                                             "type": "boolean",
                                                             "example": true
-                                                        },
-                                                        "links": {
-                                                            "type": "object",
-                                                            "properties": {
-                                                                "first": {
-                                                                    "type": "string",
-                                                                    "example": "http://localhost:8000/api/mes-transactions?page=1"
-                                                                },
-                                                                "previous": {
-                                                                    "type": "string",
-                                                                    "nullable": true,
-                                                                    "example": null
-                                                                },
-                                                                "next": {
-                                                                    "type": "string",
-                                                                    "nullable": true,
-                                                                    "example": "http://localhost:8000/api/mes-transactions?page=2"
-                                                                },
-                                                                "last": {
-                                                                    "type": "string",
-                                                                    "example": "http://localhost:8000/api/mes-transactions?page=2"
-                                                                }
-                                                            }
                                                         }
                                                     }
                                                 }
@@ -823,13 +702,44 @@
                                                     "type": "string",
                                                     "example": "-10000 CFA"
                                                 },
-                                                "client": {
-                                                    "type": "string",
-                                                    "example": "771597536"
+                                                "expediteur": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "nom": {
+                                                            "type": "string",
+                                                            "example": "Jane Smith"
+                                                        },
+                                                        "numero": {
+                                                            "type": "string",
+                                                            "example": "771234568"
+                                                        },
+                                                        "est_client": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        }
+                                                    }
                                                 },
-                                                "date": {
+                                                "destinataire": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "nom": {
+                                                            "type": "string",
+                                                            "example": "John Doe"
+                                                        },
+                                                        "numero": {
+                                                            "type": "string",
+                                                            "example": "771234567"
+                                                        },
+                                                        "est_client": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        }
+                                                    }
+                                                },
+                                                "date_transaction": {
                                                     "type": "string",
-                                                    "example": "08/11/2025"
+                                                    "format": "date-time",
+                                                    "example": "2025-11-08T14:30:00.000000Z"
                                                 },
                                                 "reference": {
                                                     "type": "string",
@@ -842,11 +752,6 @@
                                                 "statut": {
                                                     "type": "string",
                                                     "example": "validee"
-                                                },
-                                                "date_transaction": {
-                                                    "type": "string",
-                                                    "format": "date-time",
-                                                    "example": "2025-11-08T14:30:00"
                                                 }
                                             }
                                         }

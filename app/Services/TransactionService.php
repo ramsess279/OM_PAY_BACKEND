@@ -33,10 +33,14 @@ class TransactionService
             // Déterminer le destinataire
             $destinataireInfo = $this->getDestinataireInfo($transaction);
 
+            // Déterminer l'expéditeur (pour les transferts reçus)
+            $expediteurInfo = $this->getExpediteurInfo($transaction);
+
             return [
                 'libelle' => $transaction->libelle,
                 'montant' => $montantAffiche,
                 'destinataire' => $destinataireInfo,
+                'expediteur' => $expediteurInfo,
                 'date' => $transaction->date_transaction->format('Y-m-d'),
                 'reference' => $transaction->reference,
                 'type' => $transaction->type,
@@ -52,13 +56,7 @@ class TransactionService
                 'items_per_page' => $transactions->perPage(),
                 'current_page' => $transactions->currentPage(),
                 'has_previous' => $transactions->currentPage() > 1,
-                'has_next' => $transactions->hasMorePages(),
-                'links' => [
-                    'first' => $transactions->url(1),
-                    'previous' => $transactions->previousPageUrl(),
-                    'next' => $transactions->nextPageUrl(),
-                    'last' => $transactions->url($transactions->lastPage())
-                ]
+                'has_next' => $transactions->hasMorePages()
             ]
         ];
     }
@@ -66,7 +64,7 @@ class TransactionService
     /**
      * Récupère les informations du destinataire
      */
-    private function getDestinataireInfo(Transaction $transaction): array
+    public function getDestinataireInfo(Transaction $transaction): array
     {
         $info = [
             'nom' => null,
@@ -95,6 +93,49 @@ class TransactionService
         // Pour les dépôts et retraits
         elseif (in_array($transaction->type, ['depot', 'retrait'])) {
             $info['type_operation'] = $transaction->type === 'depot' ? 'Dépôt' : 'Retrait';
+        }
+
+        return $info;
+    }
+
+    /**
+     * Récupère les informations de l'expéditeur
+     *
+     * @param Transaction $transaction
+     * @return array
+     */
+    public function getExpediteurInfo(Transaction $transaction): array
+    {
+        $info = [
+            'nom' => null,
+            'numero' => null,
+            'est_client' => false
+        ];
+
+        // Pour les transferts envoyés, l'expéditeur est l'utilisateur actuel
+        if ($transaction->type === 'transfert') {
+            $user = auth()->user();
+            $info['nom'] = $user->nom . ' ' . $user->prenom;
+            $info['numero'] = $user->telephone;
+            $info['est_client'] = true;
+        }
+        // Pour les dépôts reçus via transfert, extraire de la description
+        elseif ($transaction->type === 'depot' && str_contains($transaction->libelle, 'Transfert reçu de')) {
+            // Parser "Transfert reçu de [nom]" ou chercher la transaction d'origine
+            $transfertTransaction = Transaction::where('type', 'transfert')
+                ->where('montant', $transaction->montant)
+                ->where('date_transaction', $transaction->date_transaction)
+                ->where('numero_destinataire', auth()->user()->telephone)
+                ->first();
+
+            if ($transfertTransaction) {
+                $expediteurUser = \App\Models\User::find($transfertTransaction->compte->id_client);
+                if ($expediteurUser) {
+                    $info['nom'] = $expediteurUser->nom . ' ' . $expediteurUser->prenom;
+                    $info['numero'] = $expediteurUser->telephone;
+                    $info['est_client'] = true;
+                }
+            }
         }
 
         return $info;
@@ -252,10 +293,12 @@ class TransactionService
         return [
             'libelle' => $transaction->libelle,
             'montant' => $montantAffiche,
-            'client' => $transaction->numero_destinataire ?? $transaction->code_marchand,
-            'date' => $transaction->date_transaction->format('d/m/Y'),
+            'expediteur' => $this->getExpediteurInfo($transaction),
+            'destinataire' => $this->getDestinataireInfo($transaction),
+            'date_transaction' => $transaction->date_transaction->toISOString(),
             'reference' => $transaction->reference,
             'type' => $transaction->type,
+            'statut' => $transaction->statut,
         ];
     }
 }

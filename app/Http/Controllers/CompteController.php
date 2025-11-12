@@ -53,21 +53,31 @@ class CompteController extends Controller
         
         $compte = $this->compteService->getCompteWithTransactions($compte);
 
-        // Formater la réponse : infos client directement dans data + métadonnées en bas
+        // Formater la réponse : infos client directement dans data
         $compteArray = $compte->toArray();
-        
-        // Inclure les informations de l'utilisateur directement dans data
-        $compteArray = array_merge($compteArray, [
-            'nom' => $user->nom,
-            'prenom' => $user->prenom,
-            'telephone' => $user->telephone,
-            'id_client' => $user->id,
-        ]);
 
-        // Supprimer le code_pin et les données redondantes pour la sécurité
-        unset($compteArray['code_pin']);
+        // Extraire les métadonnées pour les replacer à la fin
+        $metadata = $compteArray['metadata'] ?? null;
+
+        // Inclure les informations de l'utilisateur avant les métadonnées
+        $userFields = [
+            'nom_complet' => $user->nom . ' ' . $user->prenom,
+            'code_pin' => $compte->code_pin,
+            'numero' => $user->telephone,
+            'email' => $user->email,
+            'id_client' => $user->id,
+        ];
+
+        // Supprimer les données redondantes
         unset($compteArray['created_at']);
         unset($compteArray['updated_at']);
+        unset($compteArray['metadata']);
+
+        // Réorganiser : champs compte + champs utilisateur + métadonnées
+        $compteArray = array_merge($compteArray, $userFields);
+        if ($metadata) {
+            $compteArray['metadata'] = $metadata;
+        }
 
         return $this->successResponse($compteArray, 'Compte récupéré avec succès');
     }

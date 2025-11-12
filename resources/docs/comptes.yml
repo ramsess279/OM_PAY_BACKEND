@@ -38,9 +38,6 @@ paths:
                       id:
                         type: string
                         example: "uuid-string"
-                      id_client:
-                        type: string
-                        example: "OE093939304004040040"
                       numero_compte:
                         type: string
                         example: "OMABC12345678"
@@ -61,6 +58,22 @@ paths:
                         format: float
                         example: 150000.50
                         description: "Solde calculé dynamiquement"
+                      nom_complet:
+                        type: string
+                        example: "Fatou Fall"
+                      code_pin:
+                        type: string
+                        example: "$2y$10$..."
+                        description: "Code PIN hashé"
+                      numero:
+                        type: string
+                        example: "771234567"
+                      email:
+                        type: string
+                        example: "fatou.fall@gmail.com"
+                      id_client:
+                        type: string
+                        example: "OE093939304004040040"
                       metadata:
                         type: object
                         properties:
@@ -70,12 +83,6 @@ paths:
                           version:
                             type: integer
                             example: 1
-                      created_at:
-                        type: string
-                        format: date-time
-                      updated_at:
-                        type: string
-                        format: date-time
         '401':
           description: Non authentifié
         '404':

@@ -206,42 +206,51 @@ class TransactionObserver
      */
     private function generateRecu(Transaction $transaction): void
     {
-        // Pour l'instant, on stocke juste les données du reçu dans un fichier JSON
-        // En production, on utiliserait une bibliothèque comme TCPDF ou DomPDF pour générer un PDF
+        try {
+            // Pour l'instant, on stocke juste les données du reçu dans un fichier JSON
+            // En production, on utiliserait une bibliothèque comme TCPDF ou DomPDF pour générer un PDF
 
-        // Calculer les frais séparément si nécessaire
-        $frais = 0;
-        if ($transaction->type === 'transfert') {
-            // Chercher s'il y a une transaction de frais associée
-            $fraisTransaction = $transaction->compte->transactions()
-                ->where('type', 'frais')
-                ->where('date_transaction', $transaction->date_transaction)
-                ->where('reference', '!=', $transaction->reference)
-                ->first();
-            $frais = $fraisTransaction ? $fraisTransaction->montant : 0;
+            // Calculer les frais séparément si nécessaire
+            $frais = 0;
+            if ($transaction->type === 'transfert') {
+                // Chercher s'il y a une transaction de frais associée
+                $fraisTransaction = $transaction->compte->transactions()
+                    ->where('type', 'frais')
+                    ->where('date_transaction', $transaction->date_transaction)
+                    ->where('reference', '!=', $transaction->reference)
+                    ->first();
+                $frais = $fraisTransaction ? $fraisTransaction->montant : 0;
+            }
+
+            $recuData = [
+                'reference' => $transaction->reference,
+                'libelle' => $transaction->libelle,
+                'montant' => $transaction->montant,
+                'frais' => $frais,
+                'total_debite' => $transaction->montant + $frais,
+                'destinataire' => $transaction->numero_destinataire ?? $transaction->code_marchand,
+                'date_transaction' => $transaction->date_transaction->format('d/m/Y H:i:s'),
+                'numero_compte' => $transaction->compte->numero_compte,
+                'type' => $transaction->type,
+            ];
+
+            $fileName = 'recu_' . $transaction->reference . '.json';
+            $filePath = storage_path('app/recus/' . $fileName);
+
+            // Créer le dossier s'il n'existe pas
+            if (!file_exists(dirname($filePath))) {
+                mkdir(dirname($filePath), 0755, true);
+            }
+
+            file_put_contents($filePath, json_encode($recuData, JSON_PRETTY_PRINT));
+        } catch (\Exception $e) {
+            // En cas d'erreur lors de la génération du reçu, on log mais on ne bloque pas la transaction
+            \Illuminate\Support\Facades\Log::error('Erreur lors de la génération du reçu', [
+                'transaction_id' => $transaction->id,
+                'error' => $e->getMessage(),
+                'file' => $filePath ?? 'unknown'
+            ]);
         }
-
-        $recuData = [
-            'reference' => $transaction->reference,
-            'libelle' => $transaction->libelle,
-            'montant' => $transaction->montant,
-            'frais' => $frais,
-            'total_debite' => $transaction->montant + $frais,
-            'destinataire' => $transaction->numero_destinataire ?? $transaction->code_marchand,
-            'date_transaction' => $transaction->date_transaction->format('d/m/Y H:i:s'),
-            'numero_compte' => $transaction->compte->numero_compte,
-            'type' => $transaction->type,
-        ];
-
-        $fileName = 'recu_' . $transaction->reference . '.json';
-        $filePath = storage_path('app/recus/' . $fileName);
-
-        // Créer le dossier s'il n'existe pas
-        if (!file_exists(dirname($filePath))) {
-            mkdir(dirname($filePath), 0755, true);
-        }
-
-        file_put_contents($filePath, json_encode($recuData, JSON_PRETTY_PRINT));
     }
 
     private function calculerFrais(float $montant): float
