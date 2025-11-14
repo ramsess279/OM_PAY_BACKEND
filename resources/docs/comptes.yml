@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: OM Pay API - Gestion des Comptes
-  description: Endpoints de gestion des comptes pour l'API OM Pay
+  description: Endpoints de gestion des comptes pour l'API OM Pay (architecture multi-comptes)
   version: 1.0.0
 servers:
   - url: https://om-pay-rama.onrender.com/api
@@ -10,17 +10,17 @@ servers:
     description: Serveur de développement
 
 paths:
-  /mon-compte:
+  /comptes:
     get:
-      summary: Voir mon compte
+      summary: Voir tous mes comptes
       tags:
         - Comptes
       security:
         - bearerAuth: []
-      description: "Récupérer les informations du compte de l'utilisateur connecté (ID récupéré depuis le token)"
+      description: "Récupérer tous les comptes de l'utilisateur connecté avec leurs informations et transactions"
       responses:
         '200':
-          description: Compte récupéré avec succès
+          description: Comptes récupérés avec succès
           content:
             application/json:
               schema:
@@ -31,62 +31,306 @@ paths:
                     example: true
                   message:
                     type: string
-                    example: "Compte récupéré avec succès"
+                    example: "Comptes récupérés avec succès"
                   data:
                     type: object
                     properties:
-                      id:
-                        type: string
-                        example: "uuid-string"
-                      numero_compte:
-                        type: string
-                        example: "OMABC12345678"
-                      type:
-                        type: string
-                        enum: ["client", "marchand"]
-                        example: "client"
-                      date_creation:
-                        type: string
-                        format: date
-                        example: "2024-01-15"
-                      statut:
-                        type: string
-                        enum: ["actif", "bloque", "ferme"]
-                        example: "actif"
-                      solde:
-                        type: number
-                        format: float
-                        example: 150000.50
-                        description: "Solde calculé dynamiquement"
-                      nom_complet:
-                        type: string
-                        example: "Fatou Fall"
-                      code_pin:
-                        type: string
-                        example: "$2y$10$..."
-                        description: "Code PIN hashé"
-                      numero:
-                        type: string
-                        example: "771234567"
-                      email:
-                        type: string
-                        example: "fatou.fall@gmail.com"
-                      id_client:
-                        type: string
-                        example: "OE093939304004040040"
-                      metadata:
+                      utilisateur:
                         type: object
                         properties:
-                          derniereModification:
+                          id:
                             type: string
-                            format: date-time
-                          version:
-                            type: integer
-                            example: 1
+                            example: "uuid-user"
+                          nom:
+                            type: string
+                            example: "DIALLO"
+                          prenom:
+                            type: string
+                            example: "Aminata"
+                          nom_complet:
+                            type: string
+                            example: "DIALLO Aminata"
+                          telephone:
+                            type: string
+                            example: "771234567"
+                          email:
+                            type: string
+                            example: "aminata.diallo@email.com"
+                          status:
+                            type: string
+                            enum: ["active", "inactive"]
+                            example: "active"
+                          role:
+                            type: string
+                            example: "client"
+                      comptes:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              example: "uuid-compte"
+                            numero_compte:
+                              type: string
+                              example: "OMABC12345678"
+                            type:
+                              type: string
+                              enum: ["client", "marchand"]
+                              example: "client"
+                            date_creation:
+                              type: string
+                              format: date
+                              example: "2024-01-15"
+                            statut:
+                              type: string
+                              enum: ["actif", "bloque", "ferme"]
+                              example: "actif"
+                            solde:
+                              type: number
+                              format: float
+                              example: 150000.50
+                              description: "Solde calculé dynamiquement"
+                            transactions:
+                              type: array
+                              description: "Liste des transactions du compte (formatées pour l'affichage)"
+                              items:
+                                type: object
+                                properties:
+                                  libelle:
+                                    type: string
+                                    example: "Transfert d'argent"
+                                  montant:
+                                    type: string
+                                    example: "-1 000 CFA"
+                                  destinataire:
+                                    type: object
+                                    properties:
+                                      nom:
+                                        type: string
+                                        example: "John Doe"
+                                      numero:
+                                        type: string
+                                        example: "771234567"
+                                      est_client:
+                                        type: boolean
+                                        example: true
+                                  date:
+                                    type: string
+                                    format: date
+                                    example: "15/11/2025"
+                                  reference:
+                                    type: string
+                                    example: "PP2025111097Z.AB72D3"
+                                  type:
+                                    type: string
+                                    enum: ["depot", "retrait", "transfert", "paiement"]
+                                    example: "transfert"
+                                  statut:
+                                    type: string
+                                    enum: ["en_attente", "validee", "annulee"]
+                                    example: "validee"
+                            metadata:
+                              type: object
+                              properties:
+                                derniereModification:
+                                  type: string
+                                  format: date-time
+                                version:
+                                  type: integer
+                                  example: 1
         '401':
           description: Non authentifié
         '404':
-          description: Compte non trouvé
+          description: Aucun compte trouvé
+
+  /soldes:
+    get:
+      summary: Voir les soldes de mes comptes
+      tags:
+        - Comptes
+      security:
+        - bearerAuth: []
+      description: "Récupérer uniquement les soldes de tous les comptes de l'utilisateur connecté"
+      responses:
+        '200':
+          description: Soldes récupérés avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Soldes récupérés avec succès"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "uuid-compte"
+                        numero_compte:
+                          type: string
+                          example: "OMABC12345678"
+                        type:
+                          type: string
+                          enum: ["client", "marchand"]
+                          example: "client"
+                        solde:
+                          type: number
+                          format: float
+                          example: 150000.50
+                        statut:
+                          type: string
+                          enum: ["actif", "bloque", "ferme"]
+                          example: "actif"
+        '401':
+          description: Non authentifié
+        '404':
+          description: Aucun compte trouvé
+
+  /transactions:
+    get:
+      summary: Voir mes transactions
+      tags:
+        - Transactions
+      security:
+        - bearerAuth: []
+      description: "Récupérer les transactions de l'utilisateur avec possibilité de filtrage"
+      parameters:
+        - name: compte_id
+          in: query
+          schema:
+            type: string
+          description: "Filtrer par ID de compte spécifique"
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: ["depot", "retrait", "transfert", "paiement"]
+          description: "Filtrer par type de transaction"
+        - name: statut
+          in: query
+          schema:
+            type: string
+            enum: ["en_attente", "validee", "annulee"]
+          description: "Filtrer par statut de transaction"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+          description: "Nombre maximum de résultats (pagination)"
+      responses:
+        '200':
+          description: Transactions récupérées avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Transactions récupérées avec succès"
+                  data:
+                    type: object
+                    properties:
+                      transactions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              example: "uuid-transaction"
+                            libelle:
+                              type: string
+                              example: "Transfert d'argent"
+                            montant:
+                              type: number
+                              example: 1000
+                            montant_formate:
+                              type: string
+                              example: "-1 000 CFA"
+                            numero_destinataire:
+                              type: string
+                              example: "771234567"
+                            code_marchand:
+                              type: string
+                              example: null
+                            reference:
+                              type: string
+                              example: "PP2025111097Z.AB72D3"
+                            date_transaction:
+                              type: string
+                              format: date-time
+                              example: "2025-11-15T10:30:00.000000Z"
+                            date_formatee:
+                              type: string
+                              example: "15/11/2025"
+                            type:
+                              type: string
+                              enum: ["depot", "retrait", "transfert", "paiement"]
+                              example: "transfert"
+                            statut:
+                              type: string
+                              enum: ["en_attente", "validee", "annulee"]
+                              example: "validee"
+                            destinataire_formate:
+                              type: object
+                              properties:
+                                nom:
+                                  type: string
+                                  example: "John Doe"
+                                numero:
+                                  type: string
+                                  example: "771234567"
+                                est_client:
+                                  type: boolean
+                                  example: true
+                            compte_info:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  example: "uuid-compte"
+                                numero_compte:
+                                  type: string
+                                  example: "OMABC12345678"
+                                type:
+                                  type: string
+                                  example: "client"
+                      pagination:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                            example: 25
+                          per_page:
+                            type: integer
+                            example: 20
+                          current_page:
+                            type: integer
+                            example: 1
+                          last_page:
+                            type: integer
+                            example: 2
+                          has_previous:
+                            type: boolean
+                            example: false
+                          has_next:
+                            type: boolean
+                            example: true
+        '401':
+          description: Non authentifié
 
 securitySchemes:
   bearerAuth:

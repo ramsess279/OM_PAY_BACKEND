@@ -47,7 +47,7 @@ paths:
                   example: "1234"
       responses:
         '201':
-          description: Utilisateur créé avec succès
+          description: Utilisateur créé avec succès - Compte inactif, activation requise via email
           content:
             application/json:
               schema:
@@ -58,45 +58,19 @@ paths:
                     example: true
                   message:
                     type: string
-                    example: "Utilisateur créé avec succès"
-                  data:
-                    type: object
-                    properties:
-                      nom:
-                        type: string
-                        example: "Fatou"
-                      prenom:
-                        type: string
-                        example: "Fall"
-                      telephone:
-                        type: string
-                        example: "771234567"
-                      email:
-                        type: string
-                        example: "fatou.fall@gmail.com"
-                      numero_compte:
-                        type: string
-                        example: "OMABC12345678"
-                      code_pin:
-                        type: string
-                        example: "1234"
-                        description: "Code PIN en clair (pour référence uniquement)"
-                      solde:
-                        type: number
-                        format: float
-                        example: 50000
-                      date_creation:
-                        type: string
-                        format: date-time
-                        example: "2024-01-15T10:00:00.000000Z"
+                    example: "Utilisateur créé avec succès. Veuillez consulter votre email pour activer votre compte."
+              example:
+                success: true
+                message: "Utilisateur créé avec succès. Veuillez consulter votre email pour activer votre compte."
         '422':
           description: Erreur de validation
 
   /login:
     post:
       summary: Connexion d'un utilisateur
+      description: Connexion à un compte actif avec téléphone et code PIN
       tags:
-        - Authentification
+        - Authentification   
       requestBody:
         required: true
         content:
@@ -152,6 +126,49 @@ paths:
                         example: "2025-12-10T08:47:17.442409Z"
         '401':
           description: Téléphone ou code PIN invalide
+
+  /activate:
+    post:
+      summary: Activer un compte utilisateur
+      description: Activer un compte inactif avec le code OTP reçu par email
+      tags:
+        - Authentification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - telephone
+                - code_pin
+                - code_otp
+              properties:
+                telephone:
+                  type: string
+                  example: "771234567"
+                code_pin:
+                  type: string
+                  example: "1234"
+                code_otp:
+                  type: string
+                  example: "123456"
+      responses:
+        '200':
+          description: Compte activé avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Compte activé avec succès. Vous pouvez maintenant vous connecter."
+        '401':
+          description: Téléphone, code PIN ou code OTP invalide
 
 securitySchemes:
   bearerAuth:

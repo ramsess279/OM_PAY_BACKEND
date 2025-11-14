@@ -211,6 +211,48 @@ paths:
         '401':
           description: Téléphone ou code PIN invalide
 
+  /activate:
+    post:
+      summary: Activer un compte utilisateur
+      tags:
+        - Authentification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - telephone
+                - code_pin
+                - code_otp
+              properties:
+                telephone:
+                  type: string
+                  example: "771234567"
+                code_pin:
+                  type: string
+                  example: "1234"
+                code_otp:
+                  type: string
+                  example: "123456"
+      responses:
+        '200':
+          description: Compte activé avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Compte activé avec succès. Vous pouvez maintenant vous connecter."
+        '401':
+          description: Téléphone, code PIN ou code OTP invalide
+
   # Comptes
   /comptes:
     get:

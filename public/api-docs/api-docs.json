@@ -65,7 +65,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Utilisateur cr\u00e9\u00e9 avec succ\u00e8s",
+                        "description": "Utilisateur cr\u00e9\u00e9 avec succ\u00e8s - Compte inactif, activation requise via email",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -77,49 +77,13 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Utilisateur cr\u00e9\u00e9 avec succ\u00e8s"
-                                        },
-                                        "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "nom": {
-                                                    "type": "string",
-                                                    "example": "Fatou"
-                                                },
-                                                "prenom": {
-                                                    "type": "string",
-                                                    "example": "Fall"
-                                                },
-                                                "telephone": {
-                                                    "type": "string",
-                                                    "example": "771234567"
-                                                },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "fatou.fall@gmail.com"
-                                                },
-                                                "numero_compte": {
-                                                    "type": "string",
-                                                    "example": "OMABC12345678"
-                                                },
-                                                "code_pin": {
-                                                    "type": "string",
-                                                    "example": "1234",
-                                                    "description": "Code PIN en clair (pour r\u00e9f\u00e9rence uniquement)"
-                                                },
-                                                "solde": {
-                                                    "type": "number",
-                                                    "format": "float",
-                                                    "example": 50000
-                                                },
-                                                "date_creation": {
-                                                    "type": "string",
-                                                    "format": "date-time",
-                                                    "example": "2024-01-15T10:00:00.000000Z"
-                                                }
-                                            }
+                                            "example": "Utilisateur cr\u00e9\u00e9 avec succ\u00e8s. Veuillez consulter votre email pour activer votre compte."
                                         }
                                     }
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Utilisateur cr\u00e9\u00e9 avec succ\u00e8s. Veuillez consulter votre email pour activer votre compte."
                                 }
                             }
                         }
@@ -133,6 +97,7 @@
         "/login": {
             "post": {
                 "summary": "Connexion d'un utilisateur",
+                "description": "Connexion \u00e0 un compte actif avec t\u00e9l\u00e9phone et code PIN",
                 "tags": [
                     "Authentification"
                 ],
@@ -218,21 +183,45 @@
                 }
             }
         },
-        "/mon-compte": {
-            "get": {
-                "summary": "Voir mon compte",
+        "/activate": {
+            "post": {
+                "summary": "Activer un compte utilisateur",
+                "description": "Activer un compte inactif avec le code OTP re\u00e7u par email",
                 "tags": [
-                    "Comptes"
+                    "Authentification"
                 ],
-                "security": [
-                    {
-                        "bearerAuth": []
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "telephone",
+                                    "code_pin",
+                                    "code_otp"
+                                ],
+                                "properties": {
+                                    "telephone": {
+                                        "type": "string",
+                                        "example": "771234567"
+                                    },
+                                    "code_pin": {
+                                        "type": "string",
+                                        "example": "1234"
+                                    },
+                                    "code_otp": {
+                                        "type": "string",
+                                        "example": "123456"
+                                    }
+                                }
+                            }
+                        }
                     }
-                ],
-                "description": "R\u00e9cup\u00e9rer les informations du compte de l'utilisateur connect\u00e9 (ID r\u00e9cup\u00e9r\u00e9 depuis le token)",
+                },
                 "responses": {
                     "200": {
-                        "description": "Compte r\u00e9cup\u00e9r\u00e9 avec succ\u00e8s",
+                        "description": "Compte activ\u00e9 avec succ\u00e8s",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -244,78 +233,207 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Compte r\u00e9cup\u00e9r\u00e9 avec succ\u00e8s"
+                                            "example": "Compte activ\u00e9 avec succ\u00e8s. Vous pouvez maintenant vous connecter."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "T\u00e9l\u00e9phone, code PIN ou code OTP invalide"
+                    }
+                }
+            }
+        },
+        "/comptes": {
+            "get": {
+                "summary": "Voir tous mes comptes",
+                "tags": [
+                    "Comptes"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "description": "R\u00e9cup\u00e9rer tous les comptes de l'utilisateur connect\u00e9 avec leurs informations et transactions",
+                "responses": {
+                    "200": {
+                        "description": "Comptes r\u00e9cup\u00e9r\u00e9s avec succ\u00e8s",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Comptes r\u00e9cup\u00e9r\u00e9s avec succ\u00e8s"
                                         },
                                         "data": {
                                             "type": "object",
                                             "properties": {
-                                                "id": {
-                                                    "type": "string",
-                                                    "example": "uuid-string"
-                                                },
-                                                "numero_compte": {
-                                                    "type": "string",
-                                                    "example": "OMABC12345678"
-                                                },
-                                                "type": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "client",
-                                                        "marchand"
-                                                    ],
-                                                    "example": "client"
-                                                },
-                                                "date_creation": {
-                                                    "type": "string",
-                                                    "format": "date",
-                                                    "example": "2024-01-15"
-                                                },
-                                                "statut": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "actif",
-                                                        "bloque",
-                                                        "ferme"
-                                                    ],
-                                                    "example": "actif"
-                                                },
-                                                "solde": {
-                                                    "type": "number",
-                                                    "format": "float",
-                                                    "example": 150000.5,
-                                                    "description": "Solde calcul\u00e9 dynamiquement"
-                                                },
-                                                "nom_complet": {
-                                                    "type": "string",
-                                                    "example": "Fatou Fall"
-                                                },
-                                                "code_pin": {
-                                                    "type": "string",
-                                                    "example": "$2y$10$...",
-                                                    "description": "Code PIN hash\u00e9"
-                                                },
-                                                "numero": {
-                                                    "type": "string",
-                                                    "example": "771234567"
-                                                },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "fatou.fall@gmail.com"
-                                                },
-                                                "id_client": {
-                                                    "type": "string",
-                                                    "example": "OE093939304004040040"
-                                                },
-                                                "metadata": {
+                                                "utilisateur": {
                                                     "type": "object",
                                                     "properties": {
-                                                        "derniereModification": {
+                                                        "id": {
                                                             "type": "string",
-                                                            "format": "date-time"
+                                                            "example": "uuid-user"
                                                         },
-                                                        "version": {
-                                                            "type": "integer",
-                                                            "example": 1
+                                                        "nom": {
+                                                            "type": "string",
+                                                            "example": "DIALLO"
+                                                        },
+                                                        "prenom": {
+                                                            "type": "string",
+                                                            "example": "Aminata"
+                                                        },
+                                                        "nom_complet": {
+                                                            "type": "string",
+                                                            "example": "DIALLO Aminata"
+                                                        },
+                                                        "telephone": {
+                                                            "type": "string",
+                                                            "example": "771234567"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "aminata.diallo@email.com"
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "active",
+                                                                "inactive"
+                                                            ],
+                                                            "example": "active"
+                                                        },
+                                                        "role": {
+                                                            "type": "string",
+                                                            "example": "client"
+                                                        }
+                                                    }
+                                                },
+                                                "comptes": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string",
+                                                                "example": "uuid-compte"
+                                                            },
+                                                            "numero_compte": {
+                                                                "type": "string",
+                                                                "example": "OMABC12345678"
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "client",
+                                                                    "marchand"
+                                                                ],
+                                                                "example": "client"
+                                                            },
+                                                            "date_creation": {
+                                                                "type": "string",
+                                                                "format": "date",
+                                                                "example": "2024-01-15"
+                                                            },
+                                                            "statut": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "actif",
+                                                                    "bloque",
+                                                                    "ferme"
+                                                                ],
+                                                                "example": "actif"
+                                                            },
+                                                            "solde": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 150000.5,
+                                                                "description": "Solde calcul\u00e9 dynamiquement"
+                                                            },
+                                                            "transactions": {
+                                                                "type": "array",
+                                                                "description": "Liste des transactions du compte (format\u00e9es pour l'affichage)",
+                                                                "items": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "libelle": {
+                                                                            "type": "string",
+                                                                            "example": "Transfert d'argent"
+                                                                        },
+                                                                        "montant": {
+                                                                            "type": "string",
+                                                                            "example": "-1 000 CFA"
+                                                                        },
+                                                                        "destinataire": {
+                                                                            "type": "object",
+                                                                            "properties": {
+                                                                                "nom": {
+                                                                                    "type": "string",
+                                                                                    "example": "John Doe"
+                                                                                },
+                                                                                "numero": {
+                                                                                    "type": "string",
+                                                                                    "example": "771234567"
+                                                                                },
+                                                                                "est_client": {
+                                                                                    "type": "boolean",
+                                                                                    "example": true
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        "date": {
+                                                                            "type": "string",
+                                                                            "format": "date",
+                                                                            "example": "15/11/2025"
+                                                                        },
+                                                                        "reference": {
+                                                                            "type": "string",
+                                                                            "example": "PP2025111097Z.AB72D3"
+                                                                        },
+                                                                        "type": {
+                                                                            "type": "string",
+                                                                            "enum": [
+                                                                                "depot",
+                                                                                "retrait",
+                                                                                "transfert",
+                                                                                "paiement"
+                                                                            ],
+                                                                            "example": "transfert"
+                                                                        },
+                                                                        "statut": {
+                                                                            "type": "string",
+                                                                            "enum": [
+                                                                                "en_attente",
+                                                                                "validee",
+                                                                                "annulee"
+                                                                            ],
+                                                                            "example": "validee"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            },
+                                                            "metadata": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "derniereModification": {
+                                                                        "type": "string",
+                                                                        "format": "date-time"
+                                                                    },
+                                                                    "version": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    }
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -330,14 +448,94 @@
                         "description": "Non authentifi\u00e9"
                     },
                     "404": {
-                        "description": "Compte non trouv\u00e9"
+                        "description": "Aucun compte trouv\u00e9"
                     }
                 }
             }
         },
-        "/mes-transactions": {
+        "/soldes": {
             "get": {
-                "summary": "Lister mes transactions",
+                "summary": "Voir les soldes de mes comptes",
+                "tags": [
+                    "Comptes"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "description": "R\u00e9cup\u00e9rer uniquement les soldes de tous les comptes de l'utilisateur connect\u00e9",
+                "responses": {
+                    "200": {
+                        "description": "Soldes r\u00e9cup\u00e9r\u00e9s avec succ\u00e8s",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Soldes r\u00e9cup\u00e9r\u00e9s avec succ\u00e8s"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "example": "uuid-compte"
+                                                    },
+                                                    "numero_compte": {
+                                                        "type": "string",
+                                                        "example": "OMABC12345678"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "client",
+                                                            "marchand"
+                                                        ],
+                                                        "example": "client"
+                                                    },
+                                                    "solde": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 150000.5
+                                                    },
+                                                    "statut": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "actif",
+                                                            "bloque",
+                                                            "ferme"
+                                                        ],
+                                                        "example": "actif"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifi\u00e9"
+                    },
+                    "404": {
+                        "description": "Aucun compte trouv\u00e9"
+                    }
+                }
+            }
+        },
+        "/transactions": {
+            "get": {
+                "summary": "Lister les transactions d'un compte",
                 "tags": [
                     "Transactions"
                 ],
@@ -346,8 +544,18 @@
                         "bearerAuth": []
                     }
                 ],
-                "description": "R\u00e9cup\u00e9rer les transactions de l'utilisateur connect\u00e9 (ID du compte r\u00e9cup\u00e9r\u00e9 depuis le token)",
+                "description": "R\u00e9cup\u00e9rer les transactions d'un compte sp\u00e9cifique avec filtres avanc\u00e9s",
                 "parameters": [
+                    {
+                        "name": "compte_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "ID du compte pour lequel r\u00e9cup\u00e9rer les transactions",
+                        "example": "fc64455c-c87d-4414-becc-ad853a59e245"
+                    },
                     {
                         "name": "type",
                         "in": "query",
@@ -374,6 +582,35 @@
                             ]
                         },
                         "description": "Filtrer par statut"
+                    },
+                    {
+                        "name": "date_debut",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "description": "Date de d\u00e9but pour filtrer les transactions (YYYY-MM-DD)",
+                        "example": "2025-11-01"
+                    },
+                    {
+                        "name": "date_fin",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "description": "Date de fin pour filtrer les transactions (YYYY-MM-DD)",
+                        "example": "2025-11-30"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        },
+                        "description": "Nombre maximum de r\u00e9sultats"
                     }
                 ],
                 "responses": {
@@ -495,10 +732,64 @@
                         }
                     },
                     "401": {
-                        "description": "Non authentifi\u00e9"
+                        "description": "Non authentifi\u00e9",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "nullable": true,
+                                            "example": null
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Unauthenticated.",
+                                    "data": null
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Compte non trouv\u00e9"
+                        "description": "Compte non trouv\u00e9",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Compte non trouv\u00e9 ou acc\u00e8s non autoris\u00e9"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "nullable": true,
+                                            "example": null
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Compte non trouv\u00e9 ou acc\u00e8s non autoris\u00e9",
+                                    "data": null
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -519,10 +810,16 @@
                             "schema": {
                                 "type": "object",
                                 "required": [
+                                    "compte_id",
                                     "type",
                                     "montant_transaction"
                                 ],
                                 "properties": {
+                                    "compte_id": {
+                                        "type": "string",
+                                        "description": "ID du compte sur lequel effectuer la transaction (OBLIGATOIRE)",
+                                        "example": "fc64455c-c87d-4414-becc-ad853a59e245"
+                                    },
                                     "type": {
                                         "type": "string",
                                         "enum": [
@@ -536,12 +833,12 @@
                                     },
                                     "numero_telephone": {
                                         "type": "string",
-                                        "description": "Num\u00e9ro t\u00e9l\u00e9phone du destinataire pour les transferts (requis si type=transfert)",
+                                        "description": "Num\u00e9ro t\u00e9l\u00e9phone du destinataire pour les transferts (requis si type=transfert) ou num\u00e9ro du marchand pour les paiements",
                                         "example": "+221771234567"
                                     },
                                     "code_marchand": {
                                         "type": "string",
-                                        "description": "Code marchand pour les paiements (requis si type=paiement)",
+                                        "description": "Code marchand pour les paiements (requis si type=paiement et numero_telephone non fourni)",
                                         "example": "CAF001"
                                     },
                                     "montant_transaction": {
@@ -556,22 +853,34 @@
                                 "transfert": {
                                     "summary": "Exemple de transfert d'argent",
                                     "value": {
+                                        "compte_id": "fc64455c-c87d-4414-becc-ad853a59e245",
                                         "type": "transfert",
                                         "numero_telephone": "+221771234567",
                                         "montant_transaction": 5000
                                     }
                                 },
-                                "paiement": {
-                                    "summary": "Exemple de paiement marchand",
+                                "paiement_code": {
+                                    "summary": "Paiement par code marchand",
                                     "value": {
+                                        "compte_id": "fc64455c-c87d-4414-becc-ad853a59e245",
                                         "type": "paiement",
                                         "code_marchand": "CAF001",
+                                        "montant_transaction": 2500
+                                    }
+                                },
+                                "paiement_numero": {
+                                    "summary": "Paiement par num\u00e9ro marchand",
+                                    "value": {
+                                        "compte_id": "fc64455c-c87d-4414-becc-ad853a59e245",
+                                        "type": "paiement",
+                                        "numero_telephone": "+221771234567",
                                         "montant_transaction": 2500
                                     }
                                 },
                                 "depot": {
                                     "summary": "Exemple de d\u00e9p\u00f4t d'argent",
                                     "value": {
+                                        "compte_id": "fc64455c-c87d-4414-becc-ad853a59e245",
                                         "type": "depot",
                                         "montant_transaction": 10000
                                     }
@@ -579,6 +888,7 @@
                                 "retrait": {
                                     "summary": "Exemple de retrait",
                                     "value": {
+                                        "compte_id": "fc64455c-c87d-4414-becc-ad853a59e245",
                                         "type": "retrait",
                                         "montant_transaction": 3000
                                     }
@@ -638,21 +948,161 @@
                         }
                     },
                     "400": {
-                        "description": "Erreur de validation ou solde insuffisant"
+                        "description": "Erreur de validation ou solde insuffisant",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Solde insuffisant pour effectuer ce paiement. Solde actuel: 10 000 CFA, montant requis: 15 000 CFA"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "nullable": true,
+                                            "example": null
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Solde insuffisant pour effectuer ce paiement. Solde actuel: 10 000 CFA, montant requis: 15 000 CFA",
+                                    "data": null
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Non authentifi\u00e9"
+                        "description": "Non authentifi\u00e9",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "nullable": true,
+                                            "example": null
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Unauthenticated.",
+                                    "data": null
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Compte non trouv\u00e9"
+                        "description": "Compte non trouv\u00e9",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Compte non trouv\u00e9 ou acc\u00e8s non autoris\u00e9"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "nullable": true,
+                                            "example": null
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Compte non trouv\u00e9 ou acc\u00e8s non autoris\u00e9",
+                                    "data": null
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Param\u00e8tres invalides - fournissez soit un num\u00e9ro de t\u00e9l\u00e9phone (transfert) soit un code marchand (paiement)"
+                        "description": "Param\u00e8tres invalides - fournissez soit un num\u00e9ro de t\u00e9l\u00e9phone (transfert) soit un code marchand (paiement)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Le code marchand ou le num\u00e9ro de t\u00e9l\u00e9phone du marchand est requis pour les paiements."
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "errors": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "code_marchand": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            },
+                                                            "example": [
+                                                                "Le code marchand ou le num\u00e9ro de t\u00e9l\u00e9phone du marchand est requis pour les paiements."
+                                                            ]
+                                                        },
+                                                        "numero_telephone": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            },
+                                                            "example": [
+                                                                "Le num\u00e9ro de t\u00e9l\u00e9phone du marchand ou le code marchand est requis pour les paiements."
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Le code marchand ou le num\u00e9ro de t\u00e9l\u00e9phone du marchand est requis pour les paiements.",
+                                    "data": {
+                                        "errors": {
+                                            "code_marchand": [
+                                                "Le code marchand ou le num\u00e9ro de t\u00e9l\u00e9phone du marchand est requis pour les paiements."
+                                            ],
+                                            "numero_telephone": [
+                                                "Le num\u00e9ro de t\u00e9l\u00e9phone du marchand ou le code marchand est requis pour les paiements."
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
         },
-        "/mes-transactions/{reference}": {
+        "/transactions/{reference}": {
             "get": {
                 "summary": "Afficher une transaction sp\u00e9cifique par r\u00e9f\u00e9rence",
                 "tags": [
@@ -673,6 +1123,16 @@
                             "type": "string",
                             "example": "PP2025111097Z.AB72D3"
                         }
+                    },
+                    {
+                        "name": "compte_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "ID du compte associ\u00e9 \u00e0 la transaction",
+                        "example": "fc64455c-c87d-4414-becc-ad853a59e245"
                     }
                 ],
                 "responses": {
@@ -761,10 +1221,225 @@
                         }
                     },
                     "401": {
-                        "description": "Non authentifi\u00e9"
+                        "description": "Non authentifi\u00e9",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "nullable": true,
+                                            "example": null
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Unauthenticated.",
+                                    "data": null
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Transaction non trouv\u00e9e"
+                        "description": "Transaction non trouv\u00e9e",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Transaction non trouv\u00e9e pour ce compte"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "nullable": true,
+                                            "example": null
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Transaction non trouv\u00e9e pour ce compte",
+                                    "data": null
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/{reference}/cancel": {
+            "patch": {
+                "summary": "Annuler une transaction",
+                "tags": [
+                    "Transactions"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "description": "Annuler une transaction (non applicable aux paiements marchands)",
+                "parameters": [
+                    {
+                        "name": "reference",
+                        "in": "path",
+                        "required": true,
+                        "description": "R\u00e9f\u00e9rence de la transaction \u00e0 annuler",
+                        "schema": {
+                            "type": "string",
+                            "example": "PP2025111097Z.AB72D3"
+                        }
+                    },
+                    {
+                        "name": "compte_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "ID du compte associ\u00e9 \u00e0 la transaction",
+                        "example": "fc64455c-c87d-4414-becc-ad853a59e245"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transaction annul\u00e9e avec succ\u00e8s",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Transaction annul\u00e9e avec succ\u00e8s"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "reference": {
+                                                    "type": "string",
+                                                    "example": "PP2025111097Z.AB72D3"
+                                                },
+                                                "statut": {
+                                                    "type": "string",
+                                                    "example": "annulee"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Erreur lors de l'annulation (paiement marchand, transaction d\u00e9j\u00e0 annul\u00e9e, etc.)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les paiements marchands ne peuvent pas \u00eatre annul\u00e9s"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "nullable": true,
+                                            "example": null
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Les paiements marchands ne peuvent pas \u00eatre annul\u00e9s",
+                                    "data": null
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifi\u00e9",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "nullable": true,
+                                            "example": null
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Unauthenticated.",
+                                    "data": null
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Transaction non trouv\u00e9e",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Transaction non trouv\u00e9e pour ce compte"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "nullable": true,
+                                            "example": null
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "success": false,
+                                    "message": "Transaction non trouv\u00e9e pour ce compte",
+                                    "data": null
+                                }
+                            }
+                        }
                     }
                 }
             }

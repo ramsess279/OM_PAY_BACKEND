@@ -27,15 +27,17 @@ paths:
               properties: { nom: { type: string, example: Fatou }, prenom: { type: string, example: Fall }, telephone: { type: string, example: '771234567' }, email: { type: string, format: email, example: fatou.fall@gmail.com }, code_pin: { type: string, example: '1234' } }
       responses:
         201:
-          description: 'Utilisateur créé avec succès'
+          description: 'Utilisateur créé avec succès - Compte inactif, activation requise via email'
           content:
             application/json:
-              schema: { type: object, properties: { success: { type: boolean, example: true }, message: { type: string, example: 'Utilisateur créé avec succès' }, data: { type: object, properties: { nom: { type: string, example: Fatou }, prenom: { type: string, example: Fall }, telephone: { type: string, example: '771234567' }, email: { type: string, example: fatou.fall@gmail.com }, numero_compte: { type: string, example: OMABC12345678 }, code_pin: { type: string, example: '1234', description: 'Code PIN en clair (pour référence uniquement)' }, solde: { type: number, format: float, example: 50000 }, date_creation: { type: string, format: date-time, example: '2024-01-15T10:00:00.000000Z' } } } } }
+              schema: { type: object, properties: { success: { type: boolean, example: true }, message: { type: string, example: 'Utilisateur créé avec succès. Veuillez consulter votre email pour activer votre compte.' } } }
+              example: { success: true, message: 'Utilisateur créé avec succès. Veuillez consulter votre email pour activer votre compte.' }
         422:
           description: 'Erreur de validation'
   /login:
     post:
       summary: "Connexion d'un utilisateur"
+      description: 'Connexion à un compte actif avec téléphone et code PIN'
       tags:
         - Authentification
       requestBody:
@@ -54,35 +56,84 @@ paths:
               schema: { type: object, properties: { success: { type: boolean, example: true }, message: { type: string, example: 'Connexion réussie' }, data: { type: object, properties: { access_token: { type: string, example: eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9... }, refresh_token: { type: string, example: eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9... }, token_type: { type: string, example: Bearer }, expires_in: { type: integer, example: 3600 }, expires_at: { type: string, format: date-time, example: '2025-11-10T09:47:17.442309Z' }, refresh_expires_at: { type: string, format: date-time, example: '2025-12-10T08:47:17.442409Z' } } } } }
         401:
           description: 'Téléphone ou code PIN invalide'
-  /mon-compte:
+  /activate:
+    post:
+      summary: 'Activer un compte utilisateur'
+      description: 'Activer un compte inactif avec le code OTP reçu par email'
+      tags:
+        - Authentification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [telephone, code_pin, code_otp]
+              properties: { telephone: { type: string, example: '771234567' }, code_pin: { type: string, example: '1234' }, code_otp: { type: string, example: '123456' } }
+      responses:
+        200:
+          description: 'Compte activé avec succès'
+          content:
+            application/json:
+              schema: { type: object, properties: { success: { type: boolean, example: true }, message: { type: string, example: 'Compte activé avec succès. Vous pouvez maintenant vous connecter.' } } }
+        401:
+          description: 'Téléphone, code PIN ou code OTP invalide'
+  /comptes:
     get:
-      summary: 'Voir mon compte'
+      summary: 'Voir tous mes comptes'
       tags:
         - Comptes
       security:
         -
           bearerAuth: {  }
-      description: "Récupérer les informations du compte de l'utilisateur connecté (ID récupéré depuis le token)"
+      description: "Récupérer tous les comptes de l'utilisateur connecté avec leurs informations et transactions"
       responses:
         200:
-          description: 'Compte récupéré avec succès'
+          description: 'Comptes récupérés avec succès'
           content:
             application/json:
-              schema: { type: object, properties: { success: { type: boolean, example: true }, message: { type: string, example: 'Compte récupéré avec succès' }, data: { type: object, properties: { id: { type: string, example: uuid-string }, numero_compte: { type: string, example: OMABC12345678 }, type: { type: string, enum: [client, marchand], example: client }, date_creation: { type: string, format: date, example: '2024-01-15' }, statut: { type: string, enum: [actif, bloque, ferme], example: actif }, solde: { type: number, format: float, example: 150000.5, description: 'Solde calculé dynamiquement' }, nom_complet: { type: string, example: 'Fatou Fall' }, code_pin: { type: string, example: $2y$10$..., description: 'Code PIN hashé' }, numero: { type: string, example: '771234567' }, email: { type: string, example: fatou.fall@gmail.com }, id_client: { type: string, example: OE093939304004040040 }, metadata: { type: object, properties: { derniereModification: { type: string, format: date-time }, version: { type: integer, example: 1 } } } } } } }
+              schema: { type: object, properties: { success: { type: boolean, example: true }, message: { type: string, example: 'Comptes récupérés avec succès' }, data: { type: object, properties: { utilisateur: { type: object, properties: { id: { type: string, example: uuid-user }, nom: { type: string, example: DIALLO }, prenom: { type: string, example: Aminata }, nom_complet: { type: string, example: 'DIALLO Aminata' }, telephone: { type: string, example: '771234567' }, email: { type: string, example: aminata.diallo@email.com }, status: { type: string, enum: [active, inactive], example: active }, role: { type: string, example: client } } }, comptes: { type: array, items: { type: object, properties: { id: { type: string, example: uuid-compte }, numero_compte: { type: string, example: OMABC12345678 }, type: { type: string, enum: [client, marchand], example: client }, date_creation: { type: string, format: date, example: '2024-01-15' }, statut: { type: string, enum: [actif, bloque, ferme], example: actif }, solde: { type: number, format: float, example: 150000.5, description: 'Solde calculé dynamiquement' }, transactions: { type: array, description: "Liste des transactions du compte (formatées pour l'affichage)", items: { type: object, properties: { libelle: { type: string, example: "Transfert d'argent" }, montant: { type: string, example: '-1 000 CFA' }, destinataire: { type: object, properties: { nom: { type: string, example: 'John Doe' }, numero: { type: string, example: '771234567' }, est_client: { type: boolean, example: true } } }, date: { type: string, format: date, example: 15/11/2025 }, reference: { type: string, example: PP2025111097Z.AB72D3 }, type: { type: string, enum: [depot, retrait, transfert, paiement], example: transfert }, statut: { type: string, enum: [en_attente, validee, annulee], example: validee } } } }, metadata: { type: object, properties: { derniereModification: { type: string, format: date-time }, version: { type: integer, example: 1 } } } } } } } } } }
         401:
           description: 'Non authentifié'
         404:
-          description: 'Compte non trouvé'
-  /mes-transactions:
+          description: 'Aucun compte trouvé'
+  /soldes:
     get:
-      summary: 'Lister mes transactions'
+      summary: 'Voir les soldes de mes comptes'
+      tags:
+        - Comptes
+      security:
+        -
+          bearerAuth: {  }
+      description: "Récupérer uniquement les soldes de tous les comptes de l'utilisateur connecté"
+      responses:
+        200:
+          description: 'Soldes récupérés avec succès'
+          content:
+            application/json:
+              schema: { type: object, properties: { success: { type: boolean, example: true }, message: { type: string, example: 'Soldes récupérés avec succès' }, data: { type: array, items: { type: object, properties: { id: { type: string, example: uuid-compte }, numero_compte: { type: string, example: OMABC12345678 }, type: { type: string, enum: [client, marchand], example: client }, solde: { type: number, format: float, example: 150000.5 }, statut: { type: string, enum: [actif, bloque, ferme], example: actif } } } } } }
+        401:
+          description: 'Non authentifié'
+        404:
+          description: 'Aucun compte trouvé'
+  /transactions:
+    get:
+      summary: "Lister les transactions d'un compte"
       tags:
         - Transactions
       security:
         -
           bearerAuth: {  }
-      description: "Récupérer les transactions de l'utilisateur connecté (ID du compte récupéré depuis le token)"
+      description: "Récupérer les transactions d'un compte spécifique avec filtres avancés"
       parameters:
+        -
+          name: compte_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 'ID du compte pour lequel récupérer les transactions'
+          example: fc64455c-c87d-4414-becc-ad853a59e245
         -
           name: type
           in: query
@@ -104,6 +155,29 @@ paths:
               - validee
               - annulee
           description: 'Filtrer par statut'
+        -
+          name: date_debut
+          in: query
+          schema:
+            type: string
+            format: date
+          description: 'Date de début pour filtrer les transactions (YYYY-MM-DD)'
+          example: '2025-11-01'
+        -
+          name: date_fin
+          in: query
+          schema:
+            type: string
+            format: date
+          description: 'Date de fin pour filtrer les transactions (YYYY-MM-DD)'
+          example: '2025-11-30'
+        -
+          name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+          description: 'Nombre maximum de résultats'
       responses:
         200:
           description: 'Transactions récupérées avec succès'
@@ -112,8 +186,16 @@ paths:
               schema: { type: object, properties: { success: { type: boolean, example: true }, message: { type: string, example: 'transactions récupérés avec succès' }, data: { type: object, properties: { data: { type: array, items: { type: object, properties: { libelle: { type: string, example: "Transfert d'argent" }, montant: { type: string, example: '-10 000 CFA' }, destinataire: { type: object, properties: { nom: { type: string, example: 'John Doe' }, numero: { type: string, example: '771234567' }, est_client: { type: boolean, example: true } } }, expediteur: { type: object, properties: { nom: { type: string, example: 'Jane Smith' }, numero: { type: string, example: '771234568' }, est_client: { type: boolean, example: true } } }, date: { type: string, format: date, example: '2025-12-03' }, reference: { type: string, example: PP2025111097Z.AB72D3 }, type: { type: string, example: transfert }, statut: { type: string, example: validee } } } }, pagination: { type: object, properties: { total_items: { type: integer, example: 25 }, items_per_page: { type: integer, example: 20 }, current_page: { type: integer, example: 1 }, has_previous: { type: boolean, example: false }, has_next: { type: boolean, example: true } } } } } } }
         401:
           description: 'Non authentifié'
+          content:
+            application/json:
+              schema: { type: object, properties: { success: { type: boolean, example: false }, message: { type: string, example: Unauthenticated. }, data: { type: object, nullable: true, example: null } } }
+              example: { success: false, message: Unauthenticated., data: null }
         404:
           description: 'Compte non trouvé'
+          content:
+            application/json:
+              schema: { type: object, properties: { success: { type: boolean, example: false }, message: { type: string, example: 'Compte non trouvé ou accès non autorisé' }, data: { type: object, nullable: true, example: null } } }
+              example: { success: false, message: 'Compte non trouvé ou accès non autorisé', data: null }
     post:
       summary: 'Effectuer une transaction'
       tags:
@@ -127,13 +209,14 @@ paths:
           application/json:
             schema:
               type: object
-              required: [type, montant_transaction]
-              properties: { type: { type: string, enum: [depot, retrait, paiement, transfert], description: 'Type de transaction (OBLIGATOIRE)', example: transfert }, numero_telephone: { type: string, description: 'Numéro téléphone du destinataire pour les transferts (requis si type=transfert)', example: '+221771234567' }, code_marchand: { type: string, description: 'Code marchand pour les paiements (requis si type=paiement)', example: CAF001 }, montant_transaction: { type: number, minimum: 0.01, description: 'Montant de la transaction', example: 1000 } }
+              required: [compte_id, type, montant_transaction]
+              properties: { compte_id: { type: string, description: 'ID du compte sur lequel effectuer la transaction (OBLIGATOIRE)', example: fc64455c-c87d-4414-becc-ad853a59e245 }, type: { type: string, enum: [depot, retrait, paiement, transfert], description: 'Type de transaction (OBLIGATOIRE)', example: transfert }, numero_telephone: { type: string, description: 'Numéro téléphone du destinataire pour les transferts (requis si type=transfert) ou numéro du marchand pour les paiements', example: '+221771234567' }, code_marchand: { type: string, description: 'Code marchand pour les paiements (requis si type=paiement et numero_telephone non fourni)', example: CAF001 }, montant_transaction: { type: number, minimum: 0.01, description: 'Montant de la transaction', example: 1000 } }
             examples:
-              transfert: { summary: "Exemple de transfert d'argent", value: { type: transfert, numero_telephone: '+221771234567', montant_transaction: 5000 } }
-              paiement: { summary: 'Exemple de paiement marchand', value: { type: paiement, code_marchand: CAF001, montant_transaction: 2500 } }
-              depot: { summary: "Exemple de dépôt d'argent", value: { type: depot, montant_transaction: 10000 } }
-              retrait: { summary: 'Exemple de retrait', value: { type: retrait, montant_transaction: 3000 } }
+              transfert: { summary: "Exemple de transfert d'argent", value: { compte_id: fc64455c-c87d-4414-becc-ad853a59e245, type: transfert, numero_telephone: '+221771234567', montant_transaction: 5000 } }
+              paiement_code: { summary: 'Paiement par code marchand', value: { compte_id: fc64455c-c87d-4414-becc-ad853a59e245, type: paiement, code_marchand: CAF001, montant_transaction: 2500 } }
+              paiement_numero: { summary: 'Paiement par numéro marchand', value: { compte_id: fc64455c-c87d-4414-becc-ad853a59e245, type: paiement, numero_telephone: '+221771234567', montant_transaction: 2500 } }
+              depot: { summary: "Exemple de dépôt d'argent", value: { compte_id: fc64455c-c87d-4414-becc-ad853a59e245, type: depot, montant_transaction: 10000 } }
+              retrait: { summary: 'Exemple de retrait', value: { compte_id: fc64455c-c87d-4414-becc-ad853a59e245, type: retrait, montant_transaction: 3000 } }
       responses:
         201:
           description: 'Transaction effectuée avec succès'
@@ -142,13 +225,29 @@ paths:
               schema: { type: object, properties: { success: { type: boolean, example: true }, message: { type: string, example: 'Transaction effectuée avec succès' }, data: { type: object, properties: { libelle: { type: string, example: "Transfert d'argent" }, montant: { type: string, example: '-1 000 CFA' }, client: { type: string, example: '771234567' }, date: { type: string, example: 10/11/2025 }, reference: { type: string, example: PP2025111097Z.AB72D3 }, type: { type: string, example: transfert } } } } }
         400:
           description: 'Erreur de validation ou solde insuffisant'
+          content:
+            application/json:
+              schema: { type: object, properties: { success: { type: boolean, example: false }, message: { type: string, example: 'Solde insuffisant pour effectuer ce paiement. Solde actuel: 10 000 CFA, montant requis: 15 000 CFA' }, data: { type: object, nullable: true, example: null } } }
+              example: { success: false, message: 'Solde insuffisant pour effectuer ce paiement. Solde actuel: 10 000 CFA, montant requis: 15 000 CFA', data: null }
         401:
           description: 'Non authentifié'
+          content:
+            application/json:
+              schema: { type: object, properties: { success: { type: boolean, example: false }, message: { type: string, example: Unauthenticated. }, data: { type: object, nullable: true, example: null } } }
+              example: { success: false, message: Unauthenticated., data: null }
         404:
           description: 'Compte non trouvé'
+          content:
+            application/json:
+              schema: { type: object, properties: { success: { type: boolean, example: false }, message: { type: string, example: 'Compte non trouvé ou accès non autorisé' }, data: { type: object, nullable: true, example: null } } }
+              example: { success: false, message: 'Compte non trouvé ou accès non autorisé', data: null }
         422:
           description: 'Paramètres invalides - fournissez soit un numéro de téléphone (transfert) soit un code marchand (paiement)'
-  '/mes-transactions/{reference}':
+          content:
+            application/json:
+              schema: { type: object, properties: { success: { type: boolean, example: false }, message: { type: string, example: 'Le code marchand ou le numéro de téléphone du marchand est requis pour les paiements.' }, data: { type: object, properties: { errors: { type: object, properties: { code_marchand: { type: array, items: { type: string }, example: ['Le code marchand ou le numéro de téléphone du marchand est requis pour les paiements.'] }, numero_telephone: { type: array, items: { type: string }, example: ['Le numéro de téléphone du marchand ou le code marchand est requis pour les paiements.'] } } } } } } }
+              example: { success: false, message: 'Le code marchand ou le numéro de téléphone du marchand est requis pour les paiements.', data: { errors: { code_marchand: ['Le code marchand ou le numéro de téléphone du marchand est requis pour les paiements.'], numero_telephone: ['Le numéro de téléphone du marchand ou le code marchand est requis pour les paiements.'] } } }
+  '/transactions/{reference}':
     get:
       summary: 'Afficher une transaction spécifique par référence'
       tags:
@@ -165,6 +264,14 @@ paths:
           schema:
             type: string
             example: PP2025111097Z.AB72D3
+        -
+          name: compte_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 'ID du compte associé à la transaction'
+          example: fc64455c-c87d-4414-becc-ad853a59e245
       responses:
         200:
           description: 'Transaction récupérée avec succès'
@@ -173,8 +280,66 @@ paths:
               schema: { type: object, properties: { success: { type: boolean, example: true }, message: { type: string, example: 'Transaction récupérée avec succès' }, data: { type: object, properties: { libelle: { type: string, example: "Transfert d'argent" }, montant: { type: string, example: '-10000 CFA' }, expediteur: { type: object, properties: { nom: { type: string, example: 'Jane Smith' }, numero: { type: string, example: '771234568' }, est_client: { type: boolean, example: true } } }, destinataire: { type: object, properties: { nom: { type: string, example: 'John Doe' }, numero: { type: string, example: '771234567' }, est_client: { type: boolean, example: true } } }, date_transaction: { type: string, format: date-time, example: '2025-11-08T14:30:00.000000Z' }, reference: { type: string, example: PP20251003994.B20303 }, type: { type: string, example: transfert }, statut: { type: string, example: validee } } } } }
         401:
           description: 'Non authentifié'
+          content:
+            application/json:
+              schema: { type: object, properties: { success: { type: boolean, example: false }, message: { type: string, example: Unauthenticated. }, data: { type: object, nullable: true, example: null } } }
+              example: { success: false, message: Unauthenticated., data: null }
         404:
           description: 'Transaction non trouvée'
+          content:
+            application/json:
+              schema: { type: object, properties: { success: { type: boolean, example: false }, message: { type: string, example: 'Transaction non trouvée pour ce compte' }, data: { type: object, nullable: true, example: null } } }
+              example: { success: false, message: 'Transaction non trouvée pour ce compte', data: null }
+  '/transactions/{reference}/cancel':
+    patch:
+      summary: 'Annuler une transaction'
+      tags:
+        - Transactions
+      security:
+        -
+          bearerAuth: {  }
+      description: 'Annuler une transaction (non applicable aux paiements marchands)'
+      parameters:
+        -
+          name: reference
+          in: path
+          required: true
+          description: 'Référence de la transaction à annuler'
+          schema:
+            type: string
+            example: PP2025111097Z.AB72D3
+        -
+          name: compte_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 'ID du compte associé à la transaction'
+          example: fc64455c-c87d-4414-becc-ad853a59e245
+      responses:
+        200:
+          description: 'Transaction annulée avec succès'
+          content:
+            application/json:
+              schema: { type: object, properties: { success: { type: boolean, example: true }, message: { type: string, example: 'Transaction annulée avec succès' }, data: { type: object, properties: { reference: { type: string, example: PP2025111097Z.AB72D3 }, statut: { type: string, example: annulee } } } } }
+        400:
+          description: "Erreur lors de l'annulation (paiement marchand, transaction déjà annulée, etc.)"
+          content:
+            application/json:
+              schema: { type: object, properties: { success: { type: boolean, example: false }, message: { type: string, example: 'Les paiements marchands ne peuvent pas être annulés' }, data: { type: object, nullable: true, example: null } } }
+              example: { success: false, message: 'Les paiements marchands ne peuvent pas être annulés', data: null }
+        401:
+          description: 'Non authentifié'
+          content:
+            application/json:
+              schema: { type: object, properties: { success: { type: boolean, example: false }, message: { type: string, example: Unauthenticated. }, data: { type: object, nullable: true, example: null } } }
+              example: { success: false, message: Unauthenticated., data: null }
+        404:
+          description: 'Transaction non trouvée'
+          content:
+            application/json:
+              schema: { type: object, properties: { success: { type: boolean, example: false }, message: { type: string, example: 'Transaction non trouvée pour ce compte' }, data: { type: object, nullable: true, example: null } } }
+              example: { success: false, message: 'Transaction non trouvée pour ce compte', data: null }
 components:
   securitySchemes:
     bearerAuth:

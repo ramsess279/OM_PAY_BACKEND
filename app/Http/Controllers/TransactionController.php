@@ -22,20 +22,20 @@ class TransactionController extends Controller
 
     public function index(Request $request)
     {
-        // Récupérer l'utilisateur connecté et son compte
+        // Récupérer l'utilisateur connecté
         $user = auth()->user();
-        $compte = Compte::where('id_client', $user->id)->first();
 
+        // Récupérer le compte_id depuis les paramètres
+        $compteId = $request->query('compte_id');
+        if (!$compteId) {
+            return $this->errorResponse('Le paramètre compte_id est obligatoire', 400);
+        }
+
+        // Vérifier que le compte appartient à l'utilisateur
+        $compte = Compte::where('id', $compteId)->where('id_client', $user->id)->first();
         if (!$compte) {
-            return $this->errorResponse('Compte non trouvé', 404);
+            return $this->errorResponse('Compte non trouvé ou accès non autorisé', 404);
         }
-
-        // Vérification de sécurité : le compte appartient à l'utilisateur connecté
-        if ($compte->id_client !== $user->id) {
-            return $this->errorResponse('Accès non autorisé', 403);
-        }
-
-        // $this->authorize('view', $compte); // Désactivé temporairement
 
         $filters = $request->only(['type', 'statut']);
         $transactions = $this->transactionService->getTransactions($compte, $filters);
@@ -45,20 +45,20 @@ class TransactionController extends Controller
 
     public function store(CreateTransactionRequest $request)
     {
-        // Récupérer l'utilisateur connecté et son compte
+        // Récupérer l'utilisateur connecté
         $user = auth()->user();
-        $compte = Compte::where('id_client', $user->id)->first();
 
+        // Récupérer le compte_id depuis les paramètres
+        $compteId = $request->input('compte_id');
+        if (!$compteId) {
+            return $this->errorResponse('Le paramètre compte_id est obligatoire', 400);
+        }
+
+        // Vérifier que le compte appartient à l'utilisateur
+        $compte = Compte::where('id', $compteId)->where('id_client', $user->id)->first();
         if (!$compte) {
-            return $this->errorResponse('Compte non trouvé', 404);
+            return $this->errorResponse('Compte non trouvé ou accès non autorisé', 404);
         }
-
-        // Vérification de sécurité : le compte appartient à l'utilisateur connecté
-        if ($compte->id_client !== $user->id) {
-            return $this->errorResponse('Accès non autorisé', 403);
-        }
-
-        // $this->authorize('update', $compte); // Désactivé temporairement
 
         try {
             $transaction = $this->transactionService->createTransaction($compte, $request->validated());
@@ -71,22 +71,22 @@ class TransactionController extends Controller
     }
 
 
-    public function show(string $reference)
+    public function show(Request $request, string $reference)
     {
-        // Récupérer l'utilisateur connecté et son compte
+        // Récupérer l'utilisateur connecté
         $user = auth()->user();
-        $compte = Compte::where('id_client', $user->id)->first();
 
+        // Récupérer le compte_id depuis les paramètres
+        $compteId = $request->query('compte_id');
+        if (!$compteId) {
+            return $this->errorResponse('Le paramètre compte_id est obligatoire', 400);
+        }
+
+        // Vérifier que le compte appartient à l'utilisateur
+        $compte = Compte::where('id', $compteId)->where('id_client', $user->id)->first();
         if (!$compte) {
-            return $this->errorResponse('Compte non trouvé', 404);
+            return $this->errorResponse('Compte non trouvé ou accès non autorisé', 404);
         }
-
-        // Vérification de sécurité : le compte appartient à l'utilisateur connecté
-        if ($compte->id_client !== $user->id) {
-            return $this->errorResponse('Accès non autorisé', 403);
-        }
-
-        // $this->authorize('view', $compte); // Désactivé temporairement
 
         try {
             $transaction = $this->transactionService->getTransactionByReference($compte, $reference);
@@ -107,6 +107,37 @@ class TransactionController extends Controller
 
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 404);
+        }
+    }
+
+    public function cancel(Request $request, string $reference)
+    {
+        // Récupérer l'utilisateur connecté
+        $user = auth()->user();
+
+        // Récupérer le compte_id depuis les paramètres
+        $compteId = $request->query('compte_id');
+        if (!$compteId) {
+            return $this->errorResponse('Le paramètre compte_id est obligatoire', 400);
+        }
+
+        // Vérifier que le compte appartient à l'utilisateur
+        $compte = Compte::where('id', $compteId)->where('id_client', $user->id)->first();
+        if (!$compte) {
+            return $this->errorResponse('Compte non trouvé ou accès non autorisé', 404);
+        }
+
+        try {
+            $transaction = $this->transactionService->getTransactionByReference($compte, $reference);
+            $cancelledTransaction = $this->transactionService->cancelTransaction($compte, $transaction);
+
+            return $this->successResponse([
+                'reference' => $cancelledTransaction->reference,
+                'statut' => $cancelledTransaction->statut,
+            ], 'Transaction annulée avec succès');
+
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), 400);
         }
     }
 }

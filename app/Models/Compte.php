@@ -29,6 +29,9 @@ class Compte extends Model
         'metadata' => 'array',
     ];
 
+    protected $keyType = 'string';
+    public $incrementing = false;
+
     /**
      * Boot du modèle pour générer automatiquement les UUIDs
      */

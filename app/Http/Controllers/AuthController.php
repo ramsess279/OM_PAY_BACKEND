@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\LoginRequest;
+use App\Http\Requests\ActivateRequest;
 use App\Services\AuthService;
 use App\Http\Traits\ApiResponseTrait;
 
@@ -20,9 +21,12 @@ class AuthController extends Controller
 
     public function register(RegisterRequest $request)
     {
-        $result = $this->authService->register($request->validated());
+        $this->authService->register($request->validated());
 
-        return $this->successResponse($result, 'Utilisateur créé avec succès', 201);
+        return response()->json([
+            'success' => true,
+            'message' => 'Utilisateur créé avec succès. Veuillez consulter votre email pour activer votre compte.'
+        ], 201);
     }
 
     public function login(LoginRequest $request)
@@ -34,6 +38,17 @@ class AuthController extends Controller
         }
 
         return $this->successResponse($result, 'Connexion réussie');
+    }
+
+    public function activate(ActivateRequest $request)
+    {
+        $result = $this->authService->activate($request->validated());
+
+        if (!$result) {
+            return $this->errorResponse('Téléphone, code PIN ou code OTP invalide', 401);
+        }
+
+        return $this->successResponse([], $result['message']);
     }
 
     public function logout()

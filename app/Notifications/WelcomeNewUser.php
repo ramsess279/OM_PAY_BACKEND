@@ -44,9 +44,10 @@ class WelcomeNewUser extends Notification
                     ->line(' Téléphone : ' . $this->userData['telephone'])
                     ->line(' Email : ' . $this->userData['email'])
                     ->line(' Code PIN : ' . $this->userData['code_pin'])
+                    ->line(' Code OTP d\'activation : ' . $this->userData['otp_code'])
                     ->line(' Votre compte dispose déjà d\'un solde initial de 50 000 F CFA.')
-                    ->line('Vous pouvez maintenant vous connecter à votre compte et commencer à utiliser nos services.')
-                    ->action('Se connecter', url('/login'))
+                    ->line('Votre compte est actuellement inactif. Pour l\'activer, veuillez utiliser le code OTP ci-dessus lors de votre première connexion.')
+                    ->action('Activer mon compte', url('/login'))
                     ->line('Merci de rejoindre OM Pay!')
                     ->salutation('L\'équipe OM Pay');
     }

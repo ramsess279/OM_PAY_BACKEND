@@ -10,15 +10,22 @@ servers:
     description: Serveur de développement
 
 paths:
-  /mes-transactions:
+  /transactions:
     get:
-      summary: Lister mes transactions
+      summary: Lister les transactions d'un compte
       tags:
         - Transactions
       security:
         - bearerAuth: []
-      description: "Récupérer les transactions de l'utilisateur connecté (ID du compte récupéré depuis le token)"
+      description: "Récupérer les transactions d'un compte spécifique avec filtres avancés"
       parameters:
+        - name: compte_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID du compte pour lequel récupérer les transactions
+          example: "fc64455c-c87d-4414-becc-ad853a59e245"
         - name: type
           in: query
           schema:
@@ -31,6 +38,26 @@ paths:
             type: string
             enum: ["en_attente", "validee", "annulee"]
           description: Filtrer par statut
+        - name: date_debut
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Date de début pour filtrer les transactions (YYYY-MM-DD)
+          example: "2025-11-01"
+        - name: date_fin
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Date de fin pour filtrer les transactions (YYYY-MM-DD)
+          example: "2025-11-30"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+          description: Nombre maximum de résultats
       responses:
         '200':
           description: Transactions récupérées avec succès
@@ -116,8 +143,46 @@ paths:
                             example: true
         '401':
           description: Non authentifié
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Unauthenticated."
+                  data:
+                    type: object
+                    nullable: true
+                    example: null
+              example:
+                success: false
+                message: "Unauthenticated."
+                data: null
         '404':
           description: Compte non trouvé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Compte non trouvé ou accès non autorisé"
+                  data:
+                    type: object
+                    nullable: true
+                    example: null
+              example:
+                success: false
+                message: "Compte non trouvé ou accès non autorisé"
+                data: null
     post:
       summary: Effectuer une transaction
       tags:
@@ -131,9 +196,14 @@ paths:
             schema:
               type: object
               required:
+                - compte_id
                 - type
                 - montant_transaction
               properties:
+                compte_id:
+                  type: string
+                  description: "ID du compte sur lequel effectuer la transaction (OBLIGATOIRE)"
+                  example: "fc64455c-c87d-4414-becc-ad853a59e245"
                 type:
                   type: string
                   enum: ["depot", "retrait", "paiement", "transfert"]
@@ -141,11 +211,11 @@ paths:
                   example: "transfert"
                 numero_telephone:
                   type: string
-                  description: "Numéro téléphone du destinataire pour les transferts (requis si type=transfert)"
+                  description: "Numéro téléphone du destinataire pour les transferts (requis si type=transfert) ou numéro du marchand pour les paiements"
                   example: "+221771234567"
                 code_marchand:
                   type: string
-                  description: "Code marchand pour les paiements (requis si type=paiement)"
+                  description: "Code marchand pour les paiements (requis si type=paiement et numero_telephone non fourni)"
                   example: "CAF001"
                 montant_transaction:
                   type: number
@@ -156,23 +226,34 @@ paths:
               transfert:
                 summary: "Exemple de transfert d'argent"
                 value:
+                  compte_id: "fc64455c-c87d-4414-becc-ad853a59e245"
                   type: "transfert"
                   numero_telephone: "+221771234567"
                   montant_transaction: 5000
-              paiement:
-                summary: "Exemple de paiement marchand"
+              paiement_code:
+                summary: "Paiement par code marchand"
                 value:
+                  compte_id: "fc64455c-c87d-4414-becc-ad853a59e245"
                   type: "paiement"
                   code_marchand: "CAF001"
+                  montant_transaction: 2500
+              paiement_numero:
+                summary: "Paiement par numéro marchand"
+                value:
+                  compte_id: "fc64455c-c87d-4414-becc-ad853a59e245"
+                  type: "paiement"
+                  numero_telephone: "+221771234567"
                   montant_transaction: 2500
               depot:
                 summary: "Exemple de dépôt d'argent"
                 value:
+                  compte_id: "fc64455c-c87d-4414-becc-ad853a59e245"
                   type: "depot"
                   montant_transaction: 10000
               retrait:
                 summary: "Exemple de retrait"
                 value:
+                  compte_id: "fc64455c-c87d-4414-becc-ad853a59e245"
                   type: "retrait"
                   montant_transaction: 3000
       responses:
@@ -212,29 +293,127 @@ paths:
                         example: "transfert"
         '400':
           description: Erreur de validation ou solde insuffisant
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Solde insuffisant pour effectuer ce paiement. Solde actuel: 10 000 CFA, montant requis: 15 000 CFA"
+                  data:
+                    type: object
+                    nullable: true
+                    example: null
+              example:
+                success: false
+                message: "Solde insuffisant pour effectuer ce paiement. Solde actuel: 10 000 CFA, montant requis: 15 000 CFA"
+                data: null
         '401':
           description: Non authentifié
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Unauthenticated."
+                  data:
+                    type: object
+                    nullable: true
+                    example: null
+              example:
+                success: false
+                message: "Unauthenticated."
+                data: null
         '404':
           description: Compte non trouvé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Compte non trouvé ou accès non autorisé"
+                  data:
+                    type: object
+                    nullable: true
+                    example: null
+              example:
+                success: false
+                message: "Compte non trouvé ou accès non autorisé"
+                data: null
         '422':
           description: Paramètres invalides - fournissez soit un numéro de téléphone (transfert) soit un code marchand (paiement)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Le code marchand ou le numéro de téléphone du marchand est requis pour les paiements."
+                  data:
+                    type: object
+                    properties:
+                      errors:
+                        type: object
+                        properties:
+                          code_marchand:
+                            type: array
+                            items:
+                              type: string
+                            example: ["Le code marchand ou le numéro de téléphone du marchand est requis pour les paiements."]
+                          numero_telephone:
+                            type: array
+                            items:
+                              type: string
+                            example: ["Le numéro de téléphone du marchand ou le code marchand est requis pour les paiements."]
+              example:
+                success: false
+                message: "Le code marchand ou le numéro de téléphone du marchand est requis pour les paiements."
+                data:
+                  errors:
+                    code_marchand: ["Le code marchand ou le numéro de téléphone du marchand est requis pour les paiements."]
+                    numero_telephone: ["Le numéro de téléphone du marchand ou le code marchand est requis pour les paiements."]
 
-  /mes-transactions/{reference}:
-    get:
-      summary: Afficher une transaction spécifique par référence
-      tags:
-        - Transactions
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: reference
-          in: path
-          required: true
-          description: Référence de la transaction
-          schema:
-            type: string
-            example: "PP2025111097Z.AB72D3"
-      responses:
+  /transactions/{reference}:
+   get:
+     summary: Afficher une transaction spécifique par référence
+     tags:
+       - Transactions
+     security:
+       - bearerAuth: []
+     parameters:
+       - name: reference
+         in: path
+         required: true
+         description: Référence de la transaction
+         schema:
+           type: string
+           example: "PP2025111097Z.AB72D3"
+       - name: compte_id
+         in: query
+         required: true
+         schema:
+           type: string
+         description: ID du compte associé à la transaction
+         example: "fc64455c-c87d-4414-becc-ad853a59e245"
+     responses:
         '200':
           description: Transaction récupérée avec succès
           content:
@@ -296,8 +475,156 @@ paths:
                         example: "validee"
         '401':
           description: Non authentifié
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Unauthenticated."
+                  data:
+                    type: object
+                    nullable: true
+                    example: null
+              example:
+                success: false
+                message: "Unauthenticated."
+                data: null
         '404':
           description: Transaction non trouvée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Transaction non trouvée pour ce compte"
+                  data:
+                    type: object
+                    nullable: true
+                    example: null
+              example:
+                success: false
+                message: "Transaction non trouvée pour ce compte"
+                data: null
+
+  /transactions/{reference}/cancel:
+    patch:
+      summary: Annuler une transaction
+      tags:
+        - Transactions
+      security:
+        - bearerAuth: []
+      description: "Annuler une transaction (non applicable aux paiements marchands)"
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          description: Référence de la transaction à annuler
+          schema:
+            type: string
+            example: "PP2025111097Z.AB72D3"
+        - name: compte_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID du compte associé à la transaction
+          example: "fc64455c-c87d-4414-becc-ad853a59e245"
+      responses:
+        '200':
+          description: Transaction annulée avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Transaction annulée avec succès"
+                  data:
+                    type: object
+                    properties:
+                      reference:
+                        type: string
+                        example: "PP2025111097Z.AB72D3"
+                      statut:
+                        type: string
+                        example: "annulee"
+        '400':
+          description: Erreur lors de l'annulation (paiement marchand, transaction déjà annulée, etc.)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Les paiements marchands ne peuvent pas être annulés"
+                  data:
+                    type: object
+                    nullable: true
+                    example: null
+              example:
+                success: false
+                message: "Les paiements marchands ne peuvent pas être annulés"
+                data: null
+        '401':
+          description: Non authentifié
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Unauthenticated."
+                  data:
+                    type: object
+                    nullable: true
+                    example: null
+              example:
+                success: false
+                message: "Unauthenticated."
+                data: null
+        '404':
+          description: Transaction non trouvée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Transaction non trouvée pour ce compte"
+                  data:
+                    type: object
+                    nullable: true
+                    example: null
+              example:
+                success: false
+                message: "Transaction non trouvée pour ce compte"
+                data: null
 
 securitySchemes:
   bearerAuth:

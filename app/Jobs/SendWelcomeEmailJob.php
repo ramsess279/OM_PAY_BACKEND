@@ -17,6 +17,7 @@ class SendWelcomeEmailJob implements ShouldQueue
 
     protected $user;
     protected $codePin;
+    protected $otpCode;
 
     /**
      * Nombre de tentatives en cas d'échec
@@ -31,10 +32,11 @@ class SendWelcomeEmailJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(User $user, string $codePin)
+    public function __construct(User $user, string $codePin, string $otpCode)
     {
         $this->user = $user;
         $this->codePin = $codePin;
+        $this->otpCode = $otpCode;
         $this->onQueue('default'); // File d'attente par défaut
     }
 
@@ -56,7 +58,8 @@ class SendWelcomeEmailJob implements ShouldQueue
                 'prenom' => $this->user->prenom,
                 'telephone' => $this->user->telephone,
                 'email' => $this->user->email,
-                'code_pin' => $this->codePin
+                'code_pin' => $this->codePin,
+                'otp_code' => $this->otpCode
             ]));
 
             Log::info('Email de bienvenue envoyé avec succès', [

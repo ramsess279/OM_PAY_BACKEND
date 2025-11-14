@@ -12,11 +12,11 @@ class EmailService
      * Envoie un email de bienvenue de manière asynchrone
      * Ne bloque jamais l'inscription même en cas d'échec
      */
-    public function sendWelcomeEmail(User $user, string $codePin): void
+    public function sendWelcomeEmail(User $user, string $codePin, string $otpCode): void
     {
         try {
             // Utilise les queues pour éviter de bloquer la réponse
-            $job = new \App\Jobs\SendWelcomeEmailJob($user, $codePin);
+            $job = new \App\Jobs\SendWelcomeEmailJob($user, $codePin, $otpCode);
             
             // En production, utilise les queues
             if (app()->environment('production')) {
@@ -42,7 +42,7 @@ class EmailService
             
             // En production, on peut créer une tâche de retry
             if (app()->environment('production')) {
-                $this->scheduleRetry($user, $codePin);
+                $this->scheduleRetry($user, $codePin, $otpCode);
             }
         }
     }
@@ -50,7 +50,7 @@ class EmailService
     /**
      * Programme un retry en cas d'échec
      */
-    private function scheduleRetry(User $user, string $codePin, int $attempts = 0): void
+    private function scheduleRetry(User $user, string $codePin, string $otpCode, int $attempts = 0): void
     {
         if ($attempts >= 3) {
             Log::error('Échec définitif de l\'envoi d\'email de bienvenue', [
@@ -63,8 +63,8 @@ class EmailService
 
         $delay = pow(2, $attempts) * 60; // 1min, 2min, 4min...
         
-        dispatch(function () use ($user, $codePin, $attempts) {
-            $this->sendWelcomeEmail($user, $codePin);
+        dispatch(function () use ($user, $codePin, $otpCode, $attempts) {
+            $this->sendWelcomeEmail($user, $codePin, $otpCode);
         })->delay(now()->addMinutes($delay));
     }
 

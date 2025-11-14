@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
         // Exécuter le seeder pour les soldes initiaux
         $this->call([
             SoldeInitialSeeder::class,
+            TestComptesSeeder::class,
         ]);
 
         // \App\Models\User::factory(10)->create();

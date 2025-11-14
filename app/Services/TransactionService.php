@@ -86,9 +86,14 @@ class TransactionService
             }
         }
         // Si c'est un paiement marchand
-        elseif ($transaction->type === 'paiement' && $transaction->code_marchand) {
-            $info['code_marchand'] = $transaction->code_marchand;
-            $info['numero'] = $transaction->code_marchand;
+        elseif ($transaction->type === 'paiement') {
+            if ($transaction->code_marchand) {
+                $info['code_marchand'] = $transaction->code_marchand;
+                $info['numero'] = $transaction->code_marchand;
+            } elseif ($transaction->numero_destinataire) {
+                $info['numero_marchand'] = $transaction->numero_destinataire;
+                $info['numero'] = $transaction->numero_destinataire;
+            }
         }
         // Pour les dépôts et retraits
         elseif (in_array($transaction->type, ['depot', 'retrait'])) {
@@ -230,6 +235,18 @@ class TransactionService
                         number_format($soldeActuel, 0, ',', ' ') . ' CFA, montant requis: ' .
                         number_format($transaction->montant, 0, ',', ' ') . ' CFA');
                 }
+
+                // Vérifier que le marchand existe et est actif
+                $marchand = null;
+                if ($transaction->code_marchand) {
+                    $marchand = \App\Models\Marchand::where('code_marchand', $transaction->code_marchand)->actifs()->first();
+                } elseif ($transaction->numero_destinataire) {
+                    $marchand = \App\Models\Marchand::where('telephone', $transaction->numero_destinataire)->actifs()->first();
+                }
+
+                if (!$marchand) {
+                    throw new \Exception('Marchand non trouvé ou inactif. Vérifiez le code marchand ou le numéro de téléphone.');
+                }
                 break;
         }
 
@@ -257,6 +274,47 @@ class TransactionService
 
         if (!$transaction) {
             throw new \Exception('Transaction non trouvée pour ce compte');
+        }
+
+        return $transaction;
+    }
+
+    public function cancelTransaction(Compte $compte, Transaction $transaction)
+    {
+        // Vérifier que la transaction appartient au compte
+        if ($transaction->compte_id !== $compte->id) {
+            throw new \Exception('Transaction non trouvée pour ce compte');
+        }
+
+        // Vérifier que la transaction n'est pas déjà annulée
+        if ($transaction->statut === 'annulee') {
+            throw new \Exception('La transaction est déjà annulée');
+        }
+
+        // Les paiements ne peuvent pas être annulés
+        if ($transaction->type === 'paiement') {
+            throw new \Exception('Les paiements marchands ne peuvent pas être annulés');
+        }
+
+        // Annuler la transaction
+        $transaction->update(['statut' => 'annulee']);
+
+        // Si c'était un transfert, annuler aussi la transaction du destinataire
+        if ($transaction->type === 'transfert') {
+            $destinataireUser = \App\Models\User::where('telephone', $transaction->numero_destinataire)->first();
+            $compteDestinataire = $destinataireUser ? $destinataireUser->comptes()->first() : null;
+
+            if ($compteDestinataire) {
+                $transactionDestinataire = Transaction::where('type', 'depot')
+                    ->where('compte_id', $compteDestinataire->id)
+                    ->where('montant', $transaction->montant)
+                    ->where('date_transaction', $transaction->date_transaction)
+                    ->first();
+
+                if ($transactionDestinataire) {
+                    $transactionDestinataire->update(['statut' => 'annulee']);
+                }
+            }
         }
 
         return $transaction;

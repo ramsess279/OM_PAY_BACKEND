@@ -57,6 +57,12 @@ file_put_contents(__DIR__ . '/../storage/api-docs/api-docs.json', $jsonContent);
 $yamlContent = Symfony\Component\Yaml\Yaml::dump($finalDoc, 8, 2);
 file_put_contents(__DIR__ . '/../storage/api-docs/api-docs.yaml', $yamlContent);
 
+// Copier vers public/api-docs pour Swagger UI
+file_put_contents(__DIR__ . '/../public/api-docs/api-docs.json', $jsonContent);
+file_put_contents(__DIR__ . '/../public/api-docs/api-docs.yaml', $yamlContent);
+
 echo "Documentation Swagger régénérée avec succès !\n";
 echo "- JSON: storage/api-docs/api-docs.json\n";
 echo "- YAML: storage/api-docs/api-docs.yaml\n";
+echo "- Public JSON: public/api-docs/api-docs.json\n";
+echo "- Public YAML: public/api-docs/api-docs.yaml\n";

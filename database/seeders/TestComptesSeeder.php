@@ -23,30 +23,54 @@ class TestComptesSeeder extends Seeder
                 'nom' => 'DIALLO',
                 'prenom' => 'Aminata',
                 'telephone' => '771234567',
+                'email' => 'aminata.diallo@test.com',
                 'code_pin' => '1234',
             ],
             [
                 'nom' => 'MBAYE',
                 'prenom' => 'Ibrahima',
                 'telephone' => '772345678',
+                'email' => 'ibrahima.mbayé@test.com',
                 'code_pin' => '5678',
             ],
             [
                 'nom' => 'SOW',
                 'prenom' => 'Fatou',
                 'telephone' => '773456789',
+                'email' => 'fatou.sow@test.com',
                 'code_pin' => '9876',
+            ],
+            [
+                'nom' => 'TEST',
+                'prenom' => 'User',
+                'telephone' => '771234580',
+                'email' => 'test.user@test.com',
+                'code_pin' => '1234',
+            ],
+            [
+                'nom' => 'INACTIVE',
+                'prenom' => 'User',
+                'telephone' => '771234581',
+                'email' => 'inactive.user@test.com',
+                'code_pin' => '5678',
+                'status' => 'inactive',
+                'otp_code' => '123456',
             ],
         ];
 
         foreach ($usersData as $userData) {
-            // Créer l'utilisateur
-            $user = User::create([
-                'nom' => $userData['nom'],
-                'prenom' => $userData['prenom'],
-                'telephone' => $userData['telephone'],
-                'role' => 'client',
-            ]);
+            // Créer ou mettre à jour l'utilisateur
+            $user = User::updateOrCreate(
+                ['telephone' => $userData['telephone']],
+                [
+                    'nom' => $userData['nom'],
+                    'prenom' => $userData['prenom'],
+                    'email' => $userData['email'],
+                    'role' => 'client',
+                    'status' => $userData['status'] ?? 'active', // Activer par défaut, ou utiliser la valeur spécifiée
+                    'otp_code' => $userData['otp_code'] ?? null, // Code OTP si spécifié
+                ]
+            );
 
             // Créer le compte (le solde initial sera ajouté automatiquement)
             $compte = $user->comptes()->create([

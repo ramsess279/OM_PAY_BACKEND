@@ -40,7 +40,82 @@ class CompteService
     {
         $compte->solde = $compte->getSoldeAttribute();
 
+        // Charger les transactions avec eager loading et les formater
+        $compte->load(['transactions' => function ($query) {
+            $query->orderBy('date_transaction', 'desc')
+                  ->orderBy('created_at', 'desc');
+        }]);
+
+        // Formater les transactions pour l'affichage
+        $compte->transactions_formatted = $compte->transactions->map(function ($transaction) {
+            return [
+                'libelle' => $transaction->libelle,
+                'montant' => $this->formaterMontant($transaction),
+                'destinataire' => $this->formaterDestinataire($transaction),
+                'date' => $transaction->date_transaction->format('d/m/Y'),
+                'reference' => $transaction->reference,
+                'type' => $transaction->type,
+                'statut' => $transaction->statut,
+            ];
+        });
+
         return $compte;
+    }
+
+    /**
+     * Formate les informations du destinataire d'une transaction
+     */
+    private function formaterDestinataire($transaction)
+    {
+        $info = [
+            'nom' => null,
+            'numero' => null,
+            'est_client' => false
+        ];
+
+        switch ($transaction->type) {
+            case 'transfert':
+                if ($transaction->numero_destinataire) {
+                    $destinataireUser = User::where('telephone', $transaction->numero_destinataire)->first();
+
+                    if ($destinataireUser) {
+                        $info['nom'] = $destinataireUser->nom . ' ' . $destinataireUser->prenom;
+                        $info['numero'] = $transaction->numero_destinataire;
+                        $info['est_client'] = true;
+                    } else {
+                        $info['numero'] = $transaction->numero_destinataire;
+                        $info['est_client'] = false;
+                    }
+                }
+                break;
+
+            case 'paiement':
+                if ($transaction->code_marchand) {
+                    $info['code_marchand'] = $transaction->code_marchand;
+                    $info['numero'] = $transaction->code_marchand;
+                }
+                break;
+
+            case 'depot':
+            case 'retrait':
+                $info['type_operation'] = $transaction->type === 'depot' ? 'Dépôt' : 'Retrait';
+                break;
+        }
+
+        return $info;
+    }
+
+    /**
+     * Formate le montant d'une transaction
+     */
+    private function formaterMontant($transaction): string
+    {
+        return match ($transaction->type) {
+            'depot' => '+' . number_format($transaction->montant, 0, ',', ' ') . ' CFA',
+            'frais' => '-' . number_format($transaction->montant, 0, ',', ' ') . ' CFA',
+            'transfert', 'paiement', 'retrait' => '-' . number_format($transaction->montant, 0, ',', ' ') . ' CFA',
+            default => $transaction->montant . ' CFA'
+        };
     }
 
     /**

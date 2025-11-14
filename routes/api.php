@@ -24,6 +24,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 // Routes d'authentification
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/activate', [AuthController::class, 'activate']);
 
 // Routes marchands - Commentées pour l'instant
 // Route::get('/marchands', [App\Http\Controllers\MarchandController::class, 'index']);
@@ -33,12 +34,13 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:api')->group(function () {
     // Route::post('/logout', [AuthController::class, 'logout']); // Commenté temporairement
 
-    // Routes comptes
-    // Route::apiResource('comptes', CompteController::class)->except(['update', 'destroy']); // Commenté - un seul compte par utilisateur
-    Route::get('/mon-compte', [CompteController::class, 'show']); // Voir mon compte (ID récupéré du token)
+    // Routes comptes - Architecture multi-comptes
+    Route::get('/comptes', [CompteController::class, 'index']); // Dashboard complet (utilisateur + comptes + transactions)
+    Route::get('/soldes', [CompteController::class, 'soldes']); // Soldes rapides
+    Route::get('/transactions', [CompteController::class, 'transactions']); // Transactions filtrées (compte_id requis)
 
-    // Routes transactions - ID du compte récupéré depuis le token
-    Route::get('/mes-transactions', [TransactionController::class, 'index']); // Mes transactions
-    Route::post('/mes-transactions', [TransactionController::class, 'store']); // Nouvelle transaction
-    Route::get('/mes-transactions/{reference}', [TransactionController::class, 'show']); // Détails transaction par référence
+    // Routes transactions - Unifiées avec compte_id obligatoire
+    Route::post('/transactions', [TransactionController::class, 'store']); // Nouvelle transaction (compte_id requis)
+    Route::get('/transactions/{reference}', [TransactionController::class, 'show']); // Détail transaction (compte_id requis)
+    Route::patch('/transactions/{reference}/cancel', [TransactionController::class, 'cancel']); // Annuler transaction (compte_id requis)
 });

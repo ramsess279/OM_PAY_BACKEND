@@ -11,7 +11,7 @@ RUN composer require "zircote/swagger-php:^4.0" --no-scripts --no-interaction --
 # Étape 2: Image finale
 FROM php:8.3-cli-alpine
 
-RUN apk add --no-cache postgresql-dev \
+RUN apk add --no-cache postgresql-dev postgresql-client \
     && docker-php-ext-install pdo pdo_pgsql
 
 RUN addgroup -g 1000 laravel && adduser -G laravel -g laravel -s /bin/sh -D laravel
